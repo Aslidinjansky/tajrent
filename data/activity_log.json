@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "userId": 999,
+    "action": "verify_user",
+    "target": "Елена Смирнова",
+    "createdAt": "2024-07-28"
+  },
+  {
+    "id": 2,
+    "userId": 999,
+    "action": "publish_ad",
+    "target": "Toyota Camry 2023",
+    "createdAt": "2024-07-25"
+  },
+  {
+    "id": 3,
+    "userId": 999,
+    "action": "block_user",
+    "target": "Тестовый пользователь",
+    "createdAt": "2024-07-20"
+  }
+]

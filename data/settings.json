@@ -1,0 +1,8 @@
+{
+  "siteName": "RentApp",
+  "commission": 10,
+  "minDeposit": 100,
+  "maxDeposit": 50000,
+  "maintenance": false,
+  "welcomeMessage": "Добро пожаловать в RentApp!"
+}

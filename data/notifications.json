@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "userId": 5,
+    "type": "rent",
+    "text": "Ваша заявка на аренду одобрена",
+    "read": false,
+    "createdAt": "2024-07-28"
+  },
+  {
+    "id": 2,
+    "userId": 6,
+    "type": "message",
+    "text": "Новое сообщение от арендодателя",
+    "read": false,
+    "createdAt": "2024-07-29"
+  },
+  {
+    "id": 3,
+    "userId": 5,
+    "type": "like",
+    "text": "Ваш отзыв получил лайк",
+    "read": true,
+    "createdAt": "2024-07-25"
+  }
+]

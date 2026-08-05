@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TajRent — Объявление</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">TajRent</div>
+  <div class="header-actions">
+    <a href="profile.html" class="header-icon"><i class="fas fa-user-circle"></i></a>
+    <a href="admin.html" class="header-icon" style="background:#8B5CF630;color:#8B5CF6;"><i class="fas fa-shield-alt"></i></a>
+  </div>
+</div>
+
+<div class="detail-page" id="detailPage">
+  <!-- Photo Gallery -->
+  <div class="photo-gallery" id="photoGallery">
+    <div class="photo-main" id="photoMain">
+      <i class="fas fa-box" id="detailIcon" style="font-size:64px;color:rgba(255,255,255,0.6);"></i>
+    </div>
+    <div class="photo-dots" id="photoDots"></div>
+    <div class="photo-nav">
+      <button class="photo-nav-btn" onclick="prevPhoto()"><i class="fas fa-chevron-left"></i></button>
+      <button class="photo-nav-btn" onclick="nextPhoto()"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <button class="photo-close" onclick="history.back()"><i class="fas fa-arrow-left"></i></button>
+    <button class="photo-share" onclick="shareAd()"><i class="fas fa-share-alt"></i></button>
+    <div class="photo-badges" id="photoBadges"></div>
+  </div>
+
+  <div class="detail-body">
+    <div class="detail-header-row">
+      <h1 class="detail-title" id="detailTitle"></h1>
+      <button class="btn-icon-lg" id="likeBtn" onclick="toggleLike()"><i class="far fa-heart"></i></button>
+    </div>
+    <div class="detail-cat" id="detailCat"></div>
+
+    <!-- Price -->
+    <div class="price-card">
+      <div class="price-main" id="detailPrice"></div>
+      <div class="price-deposit" id="detailDeposit"></div>
+    </div>
+
+    <!-- Tags -->
+    <div class="tags-row" id="tagsRow" style="display:none;margin-bottom:16px;"></div>
+
+    <!-- Info Grid -->
+    <div class="detail-info" id="detailInfo"></div>
+
+    <!-- Video Section -->
+    <div id="videoSection" style="display:none;margin-bottom:16px;">
+      <h4><i class="fas fa-video" style="color:var(--accent);"></i> Видео обзор</h4>
+      <div class="video-placeholder" onclick="showToast('Видео скоро будет доступно')">
+        <i class="fas fa-play-circle" style="font-size:48px;color:var(--primary);"></i>
+        <span>Нажмите для воспроизведения</span>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="detail-desc-card">
+      <h4><i class="fas fa-info-circle" style="color:var(--primary);"></i> Описание</h4>
+      <p class="detail-desc-text" id="detailDesc"></p>
+    </div>
+
+    <!-- Landlord -->
+    <div class="landlord-card" id="landlordSection">
+      <div class="landlord-header">
+        <div class="landlord-avatar" id="landlordAvatar"></div>
+        <div class="landlord-info">
+          <div class="landlord-name" id="landlordName"></div>
+          <div class="landlord-meta" id="landlordMeta"></div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-icon-subscribe" id="subscribeBtn" onclick="toggleSubscribe()"><i class="fas fa-plus"></i></button>
+          <a href="landlord.html" class="btn-icon-subscribe" style="background:var(--primary-light);color:var(--primary);text-decoration:none;"><i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+      <div class="landlord-stats">
+        <div class="ls-item"><i class="fas fa-bullhorn" style="color:var(--primary);"></i> <span id="llAdCount">0</span> объявл.</div>
+        <div class="ls-item"><i class="fas fa-users" style="color:var(--accent);"></i> <span id="llSubCount">0</span> подписчиков</div>
+        <div class="ls-item"><i class="fas fa-star" style="color:var(--warning);"></i> <span id="llRating">0</span> рейтинг</div>
+        <div class="ls-item"><i class="fas fa-handshake" style="color:#10B981;"></i> <span id="llRents">0</span> аренд</div>
+      </div>
+    </div>
+
+    <!-- Rating -->
+    <div class="review-card-full" id="ratingSection">
+      <h4><i class="fas fa-star" style="color:var(--warning);"></i> Оставить отзыв</h4>
+      <div class="stars-input" id="ratingStars"></div>
+      <textarea id="reviewText" class="form-textarea" placeholder="Напишите ваш отзыв..." style="min-height:60px;margin-top:8px;"></textarea>
+      <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="submitReview()"><i class="fas fa-paper-plane"></i> Отправить отзыв</button>
+    </div>
+
+    <!-- Reviews -->
+    <div class="section-block" id="reviewsSection">
+      <h4><i class="fas fa-comments" style="color:var(--primary);"></i> Отзывы <span class="badge-count" id="reviewsCount">0</span></h4>
+      <div id="reviewsList"></div>
+    </div>
+
+    <!-- Comments -->
+    <div class="section-block">
+      <h4><i class="fas fa-comment-dots" style="color:var(--accent);"></i> Комментарии <span class="badge-count" id="commentsCount">0</span></h4>
+      <div id="commentsList"></div>
+      <div class="add-comment">
+        <input type="text" id="commentInput" placeholder="Написать комментарий...">
+        <button onclick="submitComment()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+
+    <!-- Similar Ads -->
+    <div class="section-block">
+      <h4><i class="fas fa-th-large" style="color:var(--primary);"></i> Похожие объявления</h4>
+      <div id="similarAds"></div>
+    </div>
+
+    <!-- Report -->
+    <div class="report-btn" onclick="reportAd()"><i class="fas fa-flag"></i> Пожаловаться на объявление</div>
+
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- Bottom Actions -->
+  <div class="detail-actions">
+    <button class="btn-icon-action" onclick="toggleFavorite()" id="favBtn"><i class="far fa-bookmark"></i></button>
+    <button class="btn-primary-lg" onclick="showRentModal()"><i class="fas fa-shield-alt"></i> Залог</button>
+    <button class="btn-accent-lg" onclick="openChat()"><i class="fas fa-comment"></i></button>
+    <button class="btn-success-lg" onclick="showPhone()"><i class="fas fa-phone"></i></button>
+  </div>
+</div>
+
+<!-- Rent Modal -->
+<div class="modal-overlay" id="rentModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title"><i class="fas fa-handshake"></i> Арендовать</h3>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:28px;font-weight:800;color:var(--primary);" id="rentPrice"></div>
+      <div style="font-size:13px;color:var(--text-secondary);" id="rentDeposit"></div>
+    </div>
+    <div class="rent-options">
+      <div class="rent-option" onclick="selectRentType('app')">
+        <i class="fas fa-shield-alt" style="color:#10B981;font-size:24px;"></i>
+        <div>
+          <div style="font-weight:600;font-size:13px;">Залог через приложение</div>
+          <div style="font-size:11px;color:var(--text-secondary);">Безопасная сделка</div>
+        </div>
+      </div>
+      <div class="rent-option" onclick="selectRentType('chat')">
+        <i class="fas fa-comments" style="color:var(--primary);font-size:24px;"></i>
+        <div>
+          <div style="font-weight:600;font-size:13px;">Договориться в чате</div>
+          <div style="font-size:11px;color:var(--text-secondary);">Обсудить условия</div>
+        </div>
+      </div>
+      <div class="rent-option" onclick="selectRentType('phone')">
+        <i class="fas fa-phone" style="color:var(--accent);font-size:24px;"></i>
+        <div>
+          <div style="font-weight:600;font-size:13px;">Позвонить</div>
+          <div style="font-size:11px;color:var(--text-secondary);">Узнать номер</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-block" onclick="closeModal('rentModal')" style="margin-top:12px;">Отмена</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const adId = parseInt(urlParams.get('id'));
+let adData = null;
+let selectedRating = 0;
+let currentPhoto = 0;
+const photos = ['🎨', '📸', '🎭', '✨', '🎪'];
+const photoColors = ['#F472B6', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
+
+const catIcons = {'Платья':'fa-tshirt','Костюмы':'fa-user-tie','Авто':'fa-car','Гостиницы':'fa-hotel','Дачи':'fa-home','Квартиры':'fa-building','Техника':'fa-camera','Другое':'fa-box'};
+const catColors = {'Платья':'#F472B6','Костюмы':'#3B82F6','Авто':'#10B981','Гостиницы':'#8B5CF6','Дачи':'#F59E0B','Квартиры':'#6366F1','Техника':'#EC4899','Другое':'#6B7280'};
+
+async function loadAd() {
+  if(!adId) { document.getElementById('detailTitle').textContent = 'Объявление не найдено'; return; }
+  try {
+    const res = await fetch('/api/ads/' + adId);
+    adData = await res.json();
+    renderDetail();
+    loadSimilar();
+  } catch(e) { document.getElementById('detailTitle').textContent = 'Ошибка загрузки'; }
+}
+
+function renderDetail() {
+  const a = adData;
+  const icon = catIcons[a.category] || 'fa-box';
+  const color = catColors[a.category] || '#7C5CFC';
+
+  // Gallery
+  document.getElementById('photoMain').style.background = 'linear-gradient(135deg, ' + color + ', ' + color + '88)';
+  document.getElementById('detailIcon').className = 'fas ' + icon;
+
+  // Dots
+  let dots = '';
+  photos.forEach((_, i) => dots += '<div class="photo-dot ' + (i === 0 ? 'active' : '') + '" onclick="goToPhoto(' + i + ')"></div>');
+  document.getElementById('photoDots').innerHTML = dots;
+
+  // Badges
+  let badges = '';
+  if(a.featured) badges += '<span class="badge-featured" style="display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:#fff;padding:4px 10px;border-radius:20px;box-shadow:0 2px 10px rgba(0,0,0,0.25);line-height:1.2;background:linear-gradient(135deg,#F59E0B,#D97706);"><i class="fas fa-crown" style="font-size:8px"></i> ТОП</span>';
+  if(a.isNew) badges += '<span class="badge-new" style="display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:#fff;padding:4px 10px;border-radius:20px;box-shadow:0 2px 10px rgba(0,0,0,0.25);line-height:1.2;background:linear-gradient(135deg,#10B981,#059669);"><i class="fas fa-sparkles" style="font-size:8px"></i> НОВИНКА</span>';
+  if(a.discount > 0) badges += '<span class="badge-discount" style="display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:#fff;padding:4px 10px;border-radius:20px;box-shadow:0 2px 10px rgba(0,0,0,0.25);line-height:1.2;background:linear-gradient(135deg,#EF4444,#DC2626);"><i class="fas fa-percent" style="font-size:8px"></i> -' + a.discount + '%</span>';
+  document.getElementById('photoBadges').innerHTML = badges;
+
+  // Header
+  document.getElementById('detailTitle').textContent = a.title;
+  document.getElementById('detailCat').innerHTML = '<i class="fas ' + icon + '"></i> ' + a.category + (a.city ? ' · ' + a.city : '');
+
+  // Price
+  document.getElementById('detailPrice').textContent = formatPrice(a.price) + ' ₽ / ' + a.unit;
+  document.getElementById('detailDeposit').textContent = 'Залог: ' + formatPrice(a.deposit || 0) + ' ₽';
+
+  // Tags
+  if(a.tags && a.tags.length) {
+    const tagsRow = document.getElementById('tagsRow');
+    tagsRow.style.display = 'flex';
+    tagsRow.innerHTML = a.tags.map(t => '<span class="tag-chip">' + t + '</span>').join('');
+  }
+
+  // Info
+  document.getElementById('detailInfo').innerHTML =
+    '<div class="detail-info-item"><div class="num">' + a.views + '</div><div class="label"><i class="fas fa-eye"></i> Просмотры</div></div>'
+    + '<div class="detail-info-item"><div class="num">' + a.likes + '</div><div class="label"><i class="fas fa-heart"></i> Лайки</div></div>'
+    + '<div class="detail-info-item"><div class="num">' + (Array.isArray(a.comments) ? a.comments.length : parseInt(a.comments) || 0) + '</div><div class="label"><i class="fas fa-comment"></i> Комм.</div></div>'
+    + '<div class="detail-info-item"><div class="num">' + formatPrice(a.deposit || 0) + ' ₽</div><div class="label"><i class="fas fa-shield-alt"></i> Залог</div></div>';
+
+  // Video
+  document.getElementById('videoSection').style.display = 'block';
+
+  // Description
+  document.getElementById('detailDesc').textContent = a.desc;
+
+  // Landlord
+  const init = a.landlordName ? a.landlordName.charAt(0) : '?';
+  document.getElementById('landlordAvatar').innerHTML = '<span style="font-size:20px;font-weight:700;">' + init + '</span>';
+  document.getElementById('landlordName').innerHTML = a.landlordName || 'Арендодатель' + (a.landlordVerified ? ' <i class="fas fa-check-circle verified-badge"></i>' : '');
+  document.getElementById('landlordMeta').innerHTML = '<i class="fas fa-star" style="color:var(--warning);"></i> ' + (a.landlordRating || 0) + ' · ' + (a.subscribersCount || 0) + ' подписчиков';
+  document.getElementById('llAdCount').textContent = a.landlordAds || 0;
+  document.getElementById('llSubCount').textContent = a.subscribersCount || 0;
+  document.getElementById('llRating').textContent = a.landlordRating || 0;
+  document.getElementById('llRents').textContent = a.landlordRents || 0;
+
+  renderStars();
+  renderReviews();
+  renderComments();
+}
+
+function renderStars() {
+  let html = '';
+  for(let i = 1; i <= 5; i++) {
+    html += '<i class="fas fa-star ' + (i <= selectedRating ? 'filled' : '') + '" onclick="setRating(' + i + ')" style="font-size:28px;"></i>';
+  }
+  document.getElementById('ratingStars').innerHTML = html;
+}
+function setRating(n) { selectedRating = n; renderStars(); }
+
+function renderReviews() {
+  const el = document.getElementById('reviewsList');
+  const reviews = adData.reviews || [];
+  document.getElementById('reviewsCount').textContent = reviews.length;
+  if(!reviews.length) { el.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;padding:12px;">Нет отзывов. Будьте первым!</div>'; return; }
+  el.innerHTML = reviews.map(r => {
+    let stars = '';
+    for(let i = 1; i <= 5; i++) stars += '<i class="fas fa-star" style="font-size:11px;color:' + (i <= r.rating ? 'var(--warning)' : 'var(--border)') + ';"></i>';
+    const init = (r.userName || 'П')[0];
+    return '<div class="review-card-full"><div class="review-header"><div class="review-avatar-sm" style="background:var(--primary-light);color:var(--primary);">' + init + '</div><div class="review-name">' + (r.userName || 'Пользователь') + '</div><div class="review-rating">' + stars + '</div></div><div class="review-text">' + r.text + '</div><div class="review-date">' + (r.createdAt || '') + '</div></div>';
+  }).join('');
+}
+
+function renderComments() {
+  const el = document.getElementById('commentsList');
+  const comments = Array.isArray(adData.comments) ? adData.comments : [];
+  document.getElementById('commentsCount').textContent = comments.length;
+  if(!comments.length) { el.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;padding:12px;">Нет комментариев</div>'; return; }
+  el.innerHTML = comments.map(c => {
+    const init = (c.userName || 'П')[0];
+    return '<div class="comment-card"><div class="comment-header"><div class="comment-avatar" style="background:var(--accent-light);color:var(--accent);">' + init + '</div><div class="comment-user">' + (c.userName || 'Пользователь') + '</div><div class="comment-date">' + (c.createdAt || '') + '</div></div><div class="comment-text">' + c.text + '</div></div>';
+  }).join('');
+}
+
+function submitReview() {
+  const text = document.getElementById('reviewText').value.trim();
+  if(!selectedRating || !text) return showToast('Выберите оценку и напишите текст');
+  fetch('/api/reviews', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adId, userId:5, rating:selectedRating, text})})
+    .then(r=>r.json()).then(()=>{showToast('Отзыв отправлен!');loadAd();}).catch(()=>showToast('Ошибка'));
+}
+
+function submitComment() {
+  const text = document.getElementById('commentInput').value.trim();
+  if(!text) return;
+  fetch('/api/comments', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adId, userId:5, text})})
+    .then(r=>r.json()).then(()=>{document.getElementById('commentInput').value='';showToast('Комментарий добавлен!');loadAd();}).catch(()=>showToast('Ошибка'));
+}
+
+function reportAd() {
+  const reason = prompt('Причина жалобы:');
+  if(!reason) return;
+  fetch('/api/reports', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({adId, userId:5, reason})})
+    .then(r=>r.json()).then(()=>showToast('Жалоба отправлена!')).catch(()=>showToast('Ошибка'));
+}
+
+function toggleLike() {
+  const btn = document.getElementById('likeBtn');
+  btn.classList.toggle('liked');
+  btn.innerHTML = btn.classList.contains('liked') ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+  showToast(btn.classList.contains('liked') ? 'Лайк добавлен!' : 'Лайк убран');
+}
+
+function toggleFavorite() {
+  const btn = document.getElementById('favBtn');
+  btn.classList.toggle('liked');
+  btn.innerHTML = btn.classList.contains('liked') ? '<i class="fas fa-bookmark"></i>' : '<i class="far fa-bookmark"></i>';
+  showToast(btn.classList.contains('liked') ? 'В избранное!' : 'Убрано из избранного');
+}
+
+function toggleSubscribe() {
+  const btn = document.getElementById('subscribeBtn');
+  btn.classList.toggle('active');
+  btn.innerHTML = btn.classList.contains('active') ? '<i class="fas fa-check"></i>' : '<i class="fas fa-plus"></i>';
+  showToast(btn.classList.contains('active') ? 'Подписка оформлена!' : 'Подписка отменена');
+}
+
+function showRentModal() {
+  document.getElementById('rentPrice').textContent = adData.price + ' ₽ / ' + adData.unit;
+  document.getElementById('rentDeposit').textContent = 'Залог: ' + (adData.deposit || 0) + ' ₽';
+  document.getElementById('rentModal').classList.add('show');
+}
+
+function selectRentType(type) {
+  closeModal('rentModal');
+  if(type === 'app') showToast('Залог оформлен через приложение!');
+  else if(type === 'chat') { openChat(); }
+  else { showPhone(); }
+}
+
+function openChat() { showToast('Чат с арендодателем открыт'); }
+function showPhone() { showToast('Номер: +7 999 123-45-67'); }
+function shareAd() { showToast('Ссылка скопирована!'); }
+
+// Photo gallery
+function goToPhoto(i) { currentPhoto = i; updatePhoto(); }
+function nextPhoto() { currentPhoto = (currentPhoto + 1) % photos.length; updatePhoto(); }
+function prevPhoto() { currentPhoto = (currentPhoto - 1 + photos.length) % photos.length; updatePhoto(); }
+function updatePhoto() {
+  const color = photoColors[currentPhoto];
+  document.getElementById('photoMain').style.background = 'linear-gradient(135deg, ' + color + ', ' + color + '88)';
+  document.getElementById('photoMain').innerHTML = '<i class="fas fa-box" style="font-size:64px;color:rgba(255,255,255,0.6);"></i>';
+  document.querySelectorAll('.photo-dot').forEach((d, i) => d.classList.toggle('active', i === currentPhoto));
+}
+
+async function loadSimilar() {
+  try {
+    const res = await fetch('/api/ads');
+    const ads = await res.json();
+    const similar = ads.filter(a => a.id !== adId && a.category === adData.category).slice(0, 3);
+    const el = document.getElementById('similarAds');
+    if(!similar.length) { el.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;padding:12px;">Нет похожих</div>'; return; }
+    el.innerHTML = '<div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0;">' + similar.map(a => {
+      const icon = catIcons[a.category] || 'fa-box';
+      return '<a href="ad-detail.html?id=' + a.id + '" style="text-decoration:none;flex-shrink:0;width:140px;">'
+        + '<div style="height:100px;border-radius:12px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;margin-bottom:6px;"><i class="fas ' + icon + '" style="font-size:28px;color:var(--primary);"></i></div>'
+        + '<div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + a.title + '</div>'
+        + '<div style="font-size:11px;color:var(--primary);font-weight:700;">' + a.price + ' ₽ / ' + a.unit + '</div></a>';
+    }).join('') + '</div>';
+  } catch(e) {}
+}
+
+function formatPrice(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+
+document.querySelectorAll('.modal-overlay').forEach(o => { o.addEventListener('click', e => { if(e.target === o) o.classList.remove('show'); }); });
+
+loadAd();
+</script>
+</body>
+</html>

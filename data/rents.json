@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "adId": 1,
+    "userId": 5,
+    "deposit": 1000,
+    "status": "completed",
+    "createdAt": "2024-07-01",
+    "paidThroughApp": true
+  },
+  {
+    "id": 2,
+    "adId": 5,
+    "userId": 5,
+    "deposit": 2000,
+    "status": "active",
+    "createdAt": "2024-07-10",
+    "paidThroughApp": false
+  },
+  {
+    "id": 3,
+    "adId": 7,
+    "userId": 6,
+    "deposit": 10000,
+    "status": "active",
+    "createdAt": "2024-07-15",
+    "paidThroughApp": true
+  }
+]

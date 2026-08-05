@@ -1,0 +1,9 @@
+V3 Status Check:
+1. Categories: Show text but icons are white on white gradient - need to fix icon visibility
+2. [object Object] in comments count - need to fix calcRating or comments field
+3. Categories row: circles overlap with filter panel - layout issue
+4. Cards render correctly with badges (TOP, NEW, DISCOUNT), tags, landlord info
+5. Bottom nav works with raised center button
+6. Search bar, filters all present
+7. Help chat button visible
+8. Need to fix: category icons not showing, [object Object] bug

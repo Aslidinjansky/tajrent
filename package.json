@@ -1,0 +1,1 @@
+{"name":"rentapp","version":"2.0.0","type":"module","scripts":{"start":"node server/app.js"},"dependencies":{"express":"^5.0.0"}}

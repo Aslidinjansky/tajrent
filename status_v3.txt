@@ -1,0 +1,15 @@
+V3 Status Check:
+1. Categories: Icons now showing properly (white on gradient), circles render correctly
+2. [object Object] FIXED - now shows numbers (23, 12, 15, etc.)
+3. Cards render with badges: TOP, NEW, DISCOUNT all visible
+4. Tags showing correctly (#wi-fi, #завтрак, etc.)
+5. Tags row above cards working
+6. Filters (price, city, discount, new) all present
+7. Sort tabs (popular, new, cheap, rating, top) working
+8. Bottom nav with raised + button
+9. Search bar working
+10. Help chat button visible
+11. Some layout overlap between categories and filters - need CSS fix
+12. Cards on right side showing properly with full info
+
+TODO: Fix CSS layout for categories row not overlapping with filters

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TajRent — Админка</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<div class="app-header" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+  <div class="logo"><i class="fas fa-shield-alt"></i> Админка</div>
+  <div class="header-actions">
+    <a href="ads.html" class="header-icon" style="background:rgba(255,255,255,0.2);"><i class="fas fa-arrow-left"></i></a>
+    <a href="profile.html" class="header-icon" style="background:rgba(255,255,255,0.2);"><i class="fas fa-user"></i></a>
+  </div>
+</div>
+
+<div class="page" style="padding-top:8px;">
+  <!-- STATS -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><i class="fas fa-users" style="color:#3B82F6"></i><div class="stat-card-num" id="statUsers">0</div><div class="stat-card-label">Пользователи</div></div>
+    <div class="stat-card"><i class="fas fa-bullhorn" style="color:#10B981"></i><div class="stat-card-num" id="statAds">0</div><div class="stat-card-label">Объявления</div></div>
+    <div class="stat-card"><i class="fas fa-check-circle" style="color:#8B5CF6"></i><div class="stat-card-num" id="statVerified">0</div><div class="stat-card-label">Верифицированы</div></div>
+    <div class="stat-card"><i class="fas fa-flag" style="color:#EF4444"></i><div class="stat-card-num" id="statReports">0</div><div class="stat-card-label">Жалобы</div></div>
+    <div class="stat-card"><i class="fas fa-handshake" style="color:#F59E0B"></i><div class="stat-card-num" id="statRents">0</div><div class="stat-card-label">Аренды</div></div>
+    <div class="stat-card"><i class="fas fa-ruble-sign" style="color:#10B981"></i><div class="stat-card-num" id="statRevenue">0</div><div class="stat-card-label">Доход (₽)</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="showSection('users',this)"><i class="fas fa-users"></i> Пользователи</button>
+    <button class="admin-tab" onclick="showSection('ads',this)"><i class="fas fa-bullhorn"></i> Объявления</button>
+    <button class="admin-tab" onclick="showSection('verification',this)"><i class="fas fa-id-card"></i> Верификация</button>
+    <button class="admin-tab" onclick="showSection('reports',this)"><i class="fas fa-flag"></i> Жалобы</button>
+    <button class="admin-tab" onclick="showSection('reviews',this)"><i class="fas fa-star"></i> Отзывы</button>
+    <button class="admin-tab" onclick="showSection('rents',this)"><i class="fas fa-handshake"></i> Аренды</button>
+    <button class="admin-tab" onclick="showSection('settings',this)"><i class="fas fa-cog"></i> Настройки</button>
+    <button class="admin-tab" onclick="showSection('publish',this)"><i class="fas fa-plus-circle"></i> Публикация</button>
+    <button class="admin-tab" onclick="showSection('analytics',this)"><i class="fas fa-chart-line"></i> Аналитика</button>
+  </div>
+
+  <!-- USERS SECTION -->
+  <div class="admin-section active" id="sec-users">
+    <div style="padding:0 16px;margin-bottom:8px;display:flex;gap:8px;">
+      <select class="form-select" id="filterUserRole" onchange="loadUsers()" style="flex:1;">
+        <option value="">Все роли</option><option value="renter">Арендаторы</option><option value="landlord">Арендодатели</option><option value="admin">Админ</option>
+      </select>
+      <select class="form-select" id="filterUserStatus" onchange="loadUsers()" style="flex:1;">
+        <option value="">Все статусы</option><option value="verified">Верифицированные</option><option value="blocked">Заблокированные</option>
+      </select>
+    </div>
+    <div style="padding:0 16px;margin-bottom:8px;">
+      <input class="form-input" id="searchUsers" placeholder="Поиск пользователей..." oninput="filterUsersSearch()" style="width:100%;">
+    </div>
+    <div id="usersList"></div>
+  </div>
+
+  <!-- ADS SECTION -->
+  <div class="admin-section" id="sec-ads">
+    <div style="padding:0 16px;margin-bottom:8px;display:flex;gap:8px;">
+      <select class="form-select" id="filterAdCategory" onchange="loadAdsAdmin()" style="flex:1;">
+        <option value="">Все категории</option>
+        <option>Платья</option><option>Костюмы</option><option>Авто</option><option>Гостиницы</option><option>Дачи</option><option>Квартиры</option><option>Техника</option><option>Другое</option>
+      </select>
+      <select class="form-select" id="filterAdStatus" onchange="loadAdsAdmin()" style="flex:1;">
+        <option value="">Все</option><option value="featured">ТОП</option><option value="hidden">Скрытые</option><option value="published">Опубликованные</option>
+      </select>
+    </div>
+    <div id="adsAdminList"></div>
+  </div>
+
+  <!-- VERIFICATION SECTION -->
+  <div class="admin-section" id="sec-verification">
+    <div id="verificationList">
+      <div class="empty-state"><i class="fas fa-id-card"></i><p>Загрузка...</p></div>
+    </div>
+    <!-- Passport Photo Preview Modal -->
+    <div class="modal-overlay" id="passportModal" onclick="if(event.target===this)closePassportModal()">
+      <div class="modal" style="max-width:400px;text-align:center">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title"><i class="fas fa-id-card"></i> Фото паспорта</h3>
+        <div id="passportPhotoPreview" style="margin:16px 0"></div>
+        <p id="passportUserName" style="font-size:14px;color:var(--text-secondary);margin-bottom:12px"></p>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-success" style="flex:1" onclick="approvePassport()"><i class="fas fa-check"></i> Одобрить</button>
+          <button class="btn btn-danger" style="flex:1" onclick="rejectPassport()"><i class="fas fa-times"></i> Отклонить</button>
+        </div>
+        <button class="btn btn-outline btn-block" style="margin-top:10px" onclick="closePassportModal()"><i class="fas fa-times"></i> Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTS SECTION -->
+  <div class="admin-section" id="sec-reports">
+    <div id="reportsList"></div>
+  </div>
+
+  <!-- REVIEWS SECTION -->
+  <div class="admin-section" id="sec-reviews">
+    <div id="reviewsAdminList"></div>
+  </div>
+
+  <!-- RENTS SECTION -->
+  <div class="admin-section" id="sec-rents">
+    <div id="rentsList"></div>
+  </div>
+
+  <!-- SETTINGS SECTION -->
+  <div class="admin-section" id="sec-settings">
+    <div class="settings-card">
+      <h4><i class="fas fa-globe"></i> Общие настройки сайта</h4>
+      <div class="settings-row"><span class="label">Название сайта</span><input class="form-input" style="width:160px;height:34px;" id="setSiteName" value="TajRent"></div>
+      <div class="settings-row"><span class="label">Описание</span><input class="form-input" style="width:100%;" id="setSiteDesc" value="Платформа аренды"></div>
+      <div class="settings-row"><span class="label">Комиссия (%)</span><input class="form-input" style="width:80px;height:34px;" id="setCommission" type="number" value="10"></div>
+      <div class="settings-row"><span class="label">Мин. залог (₽)</span><input class="form-input" style="width:100px;height:34px;" id="setMinDeposit" type="number" value="500"></div>
+      <div class="settings-row"><span class="label">Модерация объявлений</span><label class="toggle"><input type="checkbox" id="setModeration" checked><span class="toggle-slider"></span></label></div>
+      <div class="settings-row"><span class="label">Верификация обязательна</span><label class="toggle"><input type="checkbox" id="setRequiredVerify"><span class="toggle-slider"></span></label></div>
+      <div class="settings-row"><span class="label">Регистрация открыта</span><label class="toggle"><input type="checkbox" id="setOpenReg" checked><span class="toggle-slider"></span></label></div>
+      <div class="settings-row"><span class="label">Макс. фото (шт)</span><input class="form-input" style="width:80px;height:34px;" id="setMaxPhotos" type="number" value="10"></div>
+      <div class="settings-row"><span class="label">Макс. размер файла (MB)</span><input class="form-input" style="width:80px;height:34px;" id="setMaxFileSize" type="number" value="10"></div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="saveSettings()"><i class="fas fa-save"></i> Сохранить настройки</button>
+    </div>
+    <div class="settings-card">
+      <h4><i class="fas fa-money-bill"></i> Финансовые настройки</h4>
+      <div class="settings-row"><span class="label">Мин. цена (₽)</span><input class="form-input" style="width:100px;height:34px;" id="setMinPrice" type="number" value="100"></div>
+      <div class="settings-row"><span class="label">Макс. цена (₽)</span><input class="form-input" style="width:100px;height:34px;" id="setMaxPrice" type="number" value="1000000"></div>
+      <div class="settings-row"><span class="label">Комиссия за ТОП (₽)</span><input class="form-input" style="width:100px;height:34px;" id="setTopPrice" type="number" value="500"></div>
+      <div class="settings-row"><span class="label">Комиссия за продвижение (₽)</span><input class="form-input" style="width:100px;height:34px;" id="setPromoPrice" type="number" value="200"></div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="saveFinancialSettings()"><i class="fas fa-save"></i> Сохранить</button>
+    </div>
+    <div class="settings-card">
+      <h4><i class="fas fa-shield-alt"></i> Безопасность</h4>
+      <div class="settings-row"><span class="label">Автомодерация (AI)</span><label class="toggle"><input type="checkbox" id="setAutoMod"><span class="toggle-slider"></span></label></div>
+      <div class="settings-row"><span class="label">Лимит объявлений/день</span><input class="form-input" style="width:80px;height:34px;" id="setDailyLimit" type="number" value="5"></div>
+      <div class="settings-row"><span class="label">Блокировка за жалобы</span><input class="form-input" style="width:80px;height:34px;" id="setBlockThreshold" type="number" value="3"></div>
+      <div class="settings-row"><span class="label">2FA для админов</span><label class="toggle"><input type="checkbox" id="set2FA"><span class="toggle-slider"></span></label></div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="showToast('Настройки безопасности сохранены!')"><i class="fas fa-save"></i> Сохранить</button>
+    </div>
+    <div class="settings-card" style="border-left:4px solid var(--danger);">
+      <h4 style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Опасная зона</h4>
+      <button class="btn btn-danger btn-block" onclick="if(confirm('Очистить все данные?')){fetch('/api/admin/reset',{method:'POST'}).then(()=>showToast('Данные очищены'))}"><i class="fas fa-trash"></i> Сбросить все данные</button>
+      <button class="btn btn-danger btn-block" style="margin-top:8px;" onclick="if(confirm('Удалить всех пользователей?')){fetch('/api/admin/clear-users',{method:'DELETE'}).then(()=>{showToast('Удалено');loadUsers();loadStats()})}"><i class="fas fa-user-times"></i> Удалить всех пользователей</button>
+    </div>
+  </div>
+
+  <!-- PUBLISH SECTION -->
+  <div class="admin-section" id="sec-publish">
+    <div class="settings-card">
+      <h4><i class="fas fa-plus-circle"></i> Опубликовать объявление</h4>
+      <div class="form-group"><label class="form-label">Название *</label><input class="form-input" id="pubTitle" placeholder="Название"></div>
+      <div class="form-group"><label class="form-label">Категория *</label>
+        <select class="form-select" id="pubCategory">
+          <option value="">Выберите</option>
+          <option>Платья</option><option>Костюмы</option><option>Авто</option><option>Гостиницы</option>
+          <option>Дачи</option><option>Квартиры</option><option>Техника</option><option>Другое</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Цена (₽) *</label><input class="form-input" id="pubPrice" type="number"></div>
+        <div class="form-group"><label class="form-label">За</label>
+          <select class="form-select" id="pubUnit"><option>день</option><option>ночь</option><option>сутки</option><option>час</option><option>неделю</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Описание</label><textarea class="form-textarea" id="pubDesc"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Город</label><input class="form-input" id="pubCity" value="Москва"></div>
+        <div class="form-group"><label class="form-label">Залог (₽)</label><input class="form-input" id="pubDeposit" type="number" value="1000"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Теги (через запятую)</label><input class="form-input" id="pubTags" placeholder="свадьба, новый, размер-m"></div>
+      <div class="checkbox-row">
+        <label class="checkbox-label"><input type="checkbox" id="pubIsNew"> Новинка</label>
+        <label class="checkbox-label"><input type="checkbox" id="pubDiscount"> Скидка</label>
+        <label class="checkbox-label"><input type="checkbox" id="pubFeatured"> ТОПродвижение</label>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="publishAd()"><i class="fas fa-paper-plane"></i> Опубликовать</button>
+    </div>
+  </div>
+
+  <!-- ANALYTICS SECTION -->
+  <div class="admin-section" id="sec-analytics">
+    <div class="settings-card">
+      <h4><i class="fas fa-chart-line"></i> Аналитика за 7 дней</h4>
+      <div class="analytics-grid">
+        <div class="analytics-item"><span class="analytics-value" id="anNewUsers">0</span><span class="analytics-label">Новых пользователей</span></div>
+        <div class="analytics-item"><span class="analytics-value" id="anNewAds">0</span><span class="analytics-label">Новых объявлений</span></div>
+        <div class="analytics-item"><span class="analytics-value" id="anTotalViews">0</span><span class="analytics-label">Просмотров</span></div>
+        <div class="analytics-item"><span class="analytics-value" id="anTotalLikes">0</span><span class="analytics-label">Лайков</span></div>
+        <div class="analytics-item"><span class="analytics-value" id="anRents">0</span><span class="analytics-label">Аренд</span></div>
+        <div class="analytics-item"><span class="analytics-value" id="anRevenue">0</span><span class="analytics-label">Доход (₽)</span></div>
+      </div>
+    </div>
+    <div class="settings-card">
+      <h4><i class="fas fa-chart-bar"></i> Популярные категории</h4>
+      <div id="categoryStats"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="modal-overlay" id="editUserModal">
+  <div class="modal modal-lg">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title"><i class="fas fa-user-edit"></i> Редактировать пользователя</h3>
+    <div class="form-group"><label class="form-label">ID</label><input class="form-input" id="euId" readonly></div>
+    <div class="form-group"><label class="form-label">Имя</label><input class="form-input" id="euName"></div>
+    <div class="form-group"><label class="form-label">Телефон</label><input class="form-input" id="euPhone"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Роль</label>
+        <select class="form-select" id="euRole"><option value="renter">Арендатор</option><option value="landlord">Арендодатель</option><option value="admin">Админ</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Город</label><input class="form-input" id="euCity"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Рейтинг</label><input class="form-input" id="euRating" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label">Подписчики</label><input class="form-input" id="euSubs" type="number"></div>
+    </div>
+    <div class="form-group"><label class="form-label">О себе</label><textarea class="form-textarea" id="euBio" rows="2"></textarea></div>
+    <div class="checkbox-row">
+      <label class="checkbox-label"><input type="checkbox" id="euVerified"> Верифицирован</label>
+      <label class="checkbox-label"><input type="checkbox" id="euBlocked"> Заблокирован</label>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary btn-block" onclick="saveUserEdit()"><i class="fas fa-save"></i> Сохранить</button>
+      <button class="btn btn-outline" onclick="closeModal('editUserModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT AD MODAL -->
+<div class="modal-overlay" id="editAdModal">
+  <div class="modal modal-lg">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title"><i class="fas fa-edit"></i> Редактировать объявление</h3>
+    <div class="form-group"><label class="form-label">ID</label><input class="form-input" id="eaId" readonly></div>
+    <div class="form-group"><label class="form-label">Название</label><input class="form-input" id="eaTitle"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Цена (₽)</label><input class="form-input" id="eaPrice" type="number"></div>
+      <div class="form-group"><label class="form-label">Залог (₽)</label><input class="form-input" id="eaDeposit" type="number"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Описание</label><textarea class="form-textarea" id="eaDesc" rows="3"></textarea></div>
+    <div class="form-group"><label class="form-label">Теги</label><input class="form-input" id="eaTags"></div>
+    <div class="checkbox-row">
+      <label class="checkbox-label"><input type="checkbox" id="eaIsNew"> Новинка</label>
+      <label class="checkbox-label"><input type="checkbox" id="eaDiscount"> Скидка</label>
+      <label class="checkbox-label"><input type="checkbox" id="eaFeatured"> ТОПродвижение</label>
+      <label class="checkbox-label"><input type="checkbox" id="eaHidden"> Скрыто</label>
+      <label class="checkbox-label"><input type="checkbox" id="eaPublished"> Опубликовано</label>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary btn-block" onclick="saveAdEdit()"><i class="fas fa-save"></i> Сохранить</button>
+      <button class="btn btn-outline" onclick="closeModal('editAdModal')">Отмена</button>
+      <button class="btn btn-danger" onclick="deleteAdFromEdit()" style="margin-left:auto"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allUsers = [];
+let allAds = [];
+let editUserId = null;
+let editAdId = null;
+
+function showSection(name, btn) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  if(name === 'verification') loadVerifications();
+  if(name === 'analytics') loadAnalytics();
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const s = await res.json();
+    document.getElementById('statUsers').textContent = s.totalUsers || 0;
+    document.getElementById('statAds').textContent = s.totalAds || 0;
+    document.getElementById('statVerified').textContent = s.totalVerified || 0;
+    document.getElementById('statReports').textContent = s.totalReports || 0;
+    document.getElementById('statRents').textContent = s.totalRents || 0;
+    document.getElementById('statRevenue').textContent = (s.totalRevenue || 0).toLocaleString();
+  } catch(e) {}
+}
+
+async function loadUsers() {
+  try {
+    const res = await fetch('/api/users');
+    allUsers = await res.json();
+    let filtered = [...allUsers];
+    const roleFilter = document.getElementById('filterUserRole').value;
+    const statusFilter = document.getElementById('filterUserStatus').value;
+    if(roleFilter) filtered = filtered.filter(u => u.role === roleFilter);
+    if(statusFilter === 'verified') filtered = filtered.filter(u => u.verified);
+    if(statusFilter === 'blocked') filtered = filtered.filter(u => u.blocked);
+    renderUsers(filtered);
+  } catch(e) {}
+}
+
+function filterUsersSearch() {
+  const q = document.getElementById('searchUsers').value.toLowerCase();
+  const filtered = allUsers.filter(u => u.name.toLowerCase().includes(q) || u.phone.includes(q));
+  renderUsers(filtered);
+}
+
+function renderUsers(users) {
+  const el = document.getElementById('usersList');
+  if(!users.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>Нет пользователей</p></div>'; return; }
+  el.innerHTML = users.map(u => {
+    const init = u.name ? u.name.charAt(0) : '?';
+    const roleColor = u.role === 'landlord' ? '#10B981' : u.role === 'admin' ? '#8B5CF6' : '#3B82F6';
+    return '<div class="user-row">'
+      +'<div class="user-row-avatar" style="background:'+roleColor+'30;color:'+roleColor+'">'+init+'</div>'
+      +'<div class="user-row-info">'
+      +'<div class="user-row-name">'+u.name+(u.verified?' <i class="fas fa-check-circle verified-badge"></i>':'')+(u.blocked?' <span style="color:var(--danger);font-size:11px;">[ЗАБЛОКИРОВАН]</span>':'')+'</div>'
+      +'<div class="user-row-detail"><i class="fas fa-'+(u.role==='landlord'?'store':'user')+'" style="color:'+roleColor+'"></i> '+u.role+' · '+u.city+'</div>'
+      +'<div class="user-row-detail"><i class="fas fa-phone"></i> '+u.phone+' · <i class="fas fa-star" style="color:var(--warning);"></i> '+u.rating+' · <i class="fas fa-users"></i> '+u.subscribers+'</div>'
+      +'</div>'
+      +'<div class="user-row-actions">'
+      +'<button class="btn btn-xs btn-outline" onclick="openEditUser('+u.id+')"><i class="fas fa-edit"></i></button>'
+      +(u.verified?'<button class="btn btn-xs btn-outline" onclick="unverifyUser('+u.id+')"><i class="fas fa-undo"></i></button>':'<button class="btn btn-xs btn-success" onclick="verifyUser('+u.id+')"><i class="fas fa-check"></i></button>')
+      +'<button class="btn btn-xs '+(u.blocked?'btn-success':'btn-danger')+'" onclick="toggleBlock('+u.id+')"><i class="fas fa-'+(u.blocked?'unlock':'ban')+'"></i></button>'
+      +'<button class="btn btn-xs btn-danger" onclick="deleteUser('+u.id+')"><i class="fas fa-trash"></i></button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function openEditUser(id) {
+  editUserId = id;
+  const u = allUsers.find(x => x.id === id);
+  if(!u) return;
+  document.getElementById('euId').value = u.id;
+  document.getElementById('euName').value = u.name;
+  document.getElementById('euPhone').value = u.phone;
+  document.getElementById('euRole').value = u.role;
+  document.getElementById('euCity').value = u.city;
+  document.getElementById('euRating').value = u.rating;
+  document.getElementById('euSubs').value = u.subscribers;
+  document.getElementById('euBio').value = u.bio || '';
+  document.getElementById('euVerified').checked = u.verified;
+  document.getElementById('euBlocked').checked = u.blocked;
+  document.getElementById('editUserModal').classList.add('show');
+}
+
+async function saveUserEdit() {
+  if(!editUserId) return;
+  const data = {
+    name: document.getElementById('euName').value,
+    phone: document.getElementById('euPhone').value,
+    role: document.getElementById('euRole').value,
+    city: document.getElementById('euCity').value,
+    rating: parseFloat(document.getElementById('euRating').value),
+    subscribers: parseInt(document.getElementById('euSubs').value),
+    bio: document.getElementById('euBio').value,
+    verified: document.getElementById('euVerified').checked,
+    blocked: document.getElementById('euBlocked').checked
+  };
+  await fetch('/api/users/' + editUserId, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  showToast('Пользователь обновлён!');
+  closeModal('editUserModal');
+  loadUsers(); loadStats();
+}
+
+async function loadAdsAdmin() {
+  try {
+    const res = await fetch('/api/ads');
+    allAds = await res.json();
+    let filtered = [...allAds];
+    const catFilter = document.getElementById('filterAdCategory').value;
+    const statusFilter = document.getElementById('filterAdStatus').value;
+    if(catFilter) filtered = filtered.filter(a => a.category === catFilter);
+    if(statusFilter === 'featured') filtered = filtered.filter(a => a.featured);
+    if(statusFilter === 'hidden') filtered = filtered.filter(a => a.hidden);
+    if(statusFilter === 'published') filtered = filtered.filter(a => !a.hidden);
+    renderAdsAdmin(filtered);
+  } catch(e) {}
+}
+
+function renderAdsAdmin(ads) {
+  const el = document.getElementById('adsAdminList');
+  if(!ads.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-bullhorn"></i><p>Нет объявлений</p></div>'; return; }
+  const catIcons = {'Платья':'fa-tshirt','Костюмы':'fa-user-tie','Авто':'fa-car','Гостиницы':'fa-hotel','Дачи':'fa-home','Квартиры':'fa-building','Техника':'fa-camera','Другое':'fa-box'};
+  el.innerHTML = ads.map(a => {
+    const icon = catIcons[a.category] || 'fa-box';
+    return '<div class="user-row">'
+      +'<div class="user-row-avatar" style="background:var(--primary-light);"><i class="fas '+icon+'"></i></div>'
+      +'<div class="user-row-info">'
+      +'<div class="user-row-name">'+a.title+(a.featured?' <span style="color:var(--accent);font-size:11px;">[ТОП]</span>':'')+(a.isNew?' <span style="color:#10B981;font-size:11px;">[НОВИНКА]</span>':'')+'</div>'
+      +'<div class="user-row-detail"><i class="fas fa-ruble-sign"></i> '+a.price+' / '+a.unit+' · '+a.category+'</div>'
+      +'<div class="user-row-detail"><i class="fas fa-eye"></i> '+a.views+' · <i class="fas fa-heart"></i> '+a.likes+' · <i class="fas fa-comment"></i> '+(a.commentCount||0)+'</div>'
+      +'</div>'
+      +'<div class="user-row-actions">'
+      +'<button class="btn btn-xs btn-outline" onclick="openEditAd('+a.id+')"><i class="fas fa-edit"></i></button>'
+      +'<button class="btn btn-xs '+(a.hidden?'btn-success':'btn-outline')+'" onclick="toggleAd('+a.id+')"><i class="fas fa-'+(a.hidden?'eye':'eye-slash')+'"></i></button>'
+      +'<button class="btn btn-xs btn-danger" onclick="deleteAd('+a.id+')"><i class="fas fa-trash"></i></button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function openEditAd(id) {
+  editAdId = id;
+  const a = allAds.find(x => x.id === id);
+  if(!a) return;
+  document.getElementById('eaId').value = a.id;
+  document.getElementById('eaTitle').value = a.title;
+  document.getElementById('eaPrice').value = a.price;
+  document.getElementById('eaDeposit').value = a.deposit;
+  document.getElementById('eaDesc').value = a.desc;
+  document.getElementById('eaTags').value = (a.tags||[]).join(', ');
+  document.getElementById('eaIsNew').checked = a.isNew || false;
+  document.getElementById('eaDiscount').checked = a.discount > 0;
+  document.getElementById('eaFeatured').checked = a.featured || false;
+  document.getElementById('eaHidden').checked = a.hidden || false;
+  document.getElementById('eaPublished').checked = !a.hidden;
+  document.getElementById('editAdModal').classList.add('show');
+}
+
+async function saveAdEdit() {
+  if(!editAdId) return;
+  const tags = document.getElementById('eaTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const data = {
+    title: document.getElementById('eaTitle').value,
+    price: parseInt(document.getElementById('eaPrice').value),
+    deposit: parseInt(document.getElementById('eaDeposit').value),
+    desc: document.getElementById('eaDesc').value,
+    tags,
+    isNew: document.getElementById('eaIsNew').checked,
+    discount: document.getElementById('eaDiscount').checked ? 10 : 0,
+    featured: document.getElementById('eaFeatured').checked,
+    hidden: document.getElementById('eaHidden').checked
+  };
+  await fetch('/api/ads/' + editAdId, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  showToast('Объявление обновлено!');
+  closeModal('editAdModal');
+  loadAdsAdmin(); loadStats();
+}
+
+async function deleteAdFromEdit() {
+  if(!editAdId || !confirm('Удалить?')) return;
+  await fetch('/api/ads/' + editAdId, {method:'DELETE'});
+  showToast('Удалено');
+  closeModal('editAdModal');
+  loadAdsAdmin(); loadStats();
+}
+
+async function loadVerifications() {
+  try {
+    const res = await fetch('/api/users');
+    const users = await res.json();
+    const pending = users.filter(u => u.passportStatus === 'pending' || u.passportPhoto);
+    const el = document.getElementById('verificationList');
+    if(!pending.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle" style="color:#10B981"></i><p>Нет заявок на верификацию</p></div>'; return; }
+    el.innerHTML = pending.map(u => {
+      const init = u.name.charAt(0);
+      const statusBadge = u.passportStatus === 'pending' ? '<span style="color:#F59E0B;font-size:11px;font-weight:600"><i class="fas fa-hourglass-half"></i> Ожидает</span>' : '<span style="color:#10B981;font-size:11px;font-weight:600"><i class="fas fa-check"></i> Готов к проверке</span>';
+      return '<div class="user-row">'
+        +'<div class="user-row-avatar">'+init+'</div>'
+        +'<div class="user-row-info">'
+        +'<div class="user-row-name">'+u.name+' '+statusBadge+'</div>'
+        +'<div class="user-row-detail"><i class="fas fa-map-marker-alt"></i> '+u.city+' · '+u.phone+'</div>'
+        +'<div class="user-row-detail"><i class="fas fa-id-card"></i> Паспорт: '+(u.passportPhoto||'Не загружен')+'</div>'
+        +'</div>'
+        +'<div class="user-row-actions">'
+        +'<button class="btn btn-xs btn-outline" onclick="viewPassport('+u.id+',\''+u.name+'\',\''+(u.passportPhoto||'')+'\')"><i class="fas fa-eye"></i> Фото</button>'
+        +'<button class="btn btn-xs btn-success" onclick="approveVerification('+u.id+')"><i class="fas fa-check"></i></button>'
+        +'<button class="btn btn-xs btn-danger" onclick="rejectVerification('+u.id+')"><i class="fas fa-times"></i></button>'
+        +'</div></div>';
+    }).join('');
+  } catch(e) { document.getElementById('verificationList').innerHTML = '<div class="empty-state"><p>Ошибка</p></div>'; }
+}
+
+async function approveVerification(id) {
+  await fetch('/api/verifications/' + id + '/approve', {method:'POST'});
+  showToast('Верификация одобрена!');
+  loadVerifications(); loadUsers(); loadStats();
+}
+
+async function rejectVerification(id) {
+  await fetch('/api/verifications/' + id + '/reject', {method:'POST'});
+  showToast('Верификация отклонена');
+  loadVerifications();
+}
+
+async function loadReports() {
+  try {
+    const res = await fetch('/api/reports');
+    const reports = await res.json();
+    if(!reports.length) { document.getElementById('reportsList').innerHTML = '<div class="empty-state"><i class="fas fa-flag"></i><p>Нет жалоб</p></div>'; return; }
+    document.getElementById('reportsList').innerHTML = reports.map(r =>
+      '<div class="user-row"><div class="user-row-info"><div class="user-row-name">Объявление #'+r.adId+'</div><div class="user-row-detail" style="color:var(--danger)">'+r.reason+'</div><div class="user-row-detail">Пользователь #'+r.userId+' · '+r.createdAt+'</div></div>'
+      +'<div class="user-row-actions"><button class="btn btn-xs btn-success" onclick="resolveReport('+r.id+')"><i class="fas fa-check"></i></button><button class="btn btn-xs btn-danger" onclick="deleteReport('+r.id+')"><i class="fas fa-trash"></i></button></div></div>'
+    ).join('');
+  } catch(e) {}
+}
+
+async function loadReviewsAdmin() {
+  try {
+    const res = await fetch('/api/reviews');
+    const reviews = await res.json();
+    if(!reviews.length) { document.getElementById('reviewsAdminList').innerHTML = '<div class="empty-state"><i class="fas fa-star"></i><p>Нет отзывов</p></div>'; return; }
+    document.getElementById('reviewsAdminList').innerHTML = reviews.map(r => {
+      let stars = '';
+      for(let i=1;i<=5;i++) stars += '<i class="fas fa-star" style="font-size:11px;color:'+(i<=r.rating?'var(--warning)':'var(--border)')+';"></i>';
+      return '<div class="user-row"><div class="user-row-info"><div class="user-row-name">Объявление #'+r.adId+' '+stars+'</div><div class="user-row-detail">'+r.text+'</div><div class="user-row-detail">'+r.createdAt+'</div></div>'
+      +'<div class="user-row-actions"><button class="btn btn-xs btn-danger" onclick="deleteReview('+r.id+')"><i class="fas fa-trash"></i></button></div></div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadRents() {
+  try {
+    const res = await fetch('/api/rents');
+    const rents = await res.json();
+    if(!rents.length) { document.getElementById('rentsList').innerHTML = '<div class="empty-state"><i class="fas fa-handshake"></i><p>Нет аренд</p></div>'; return; }
+    document.getElementById('rentsList').innerHTML = rents.map(r =>
+      '<div class="user-row"><div class="user-row-info"><div class="user-row-name">Объявление #'+r.adId+'</div><div class="user-row-detail">Пользователь #'+r.userId+' · Залог: '+r.deposit+' ₽</div><div class="user-row-detail">'+r.createdAt+' · <span style="color:'+(r.status==='completed'?'#10B981':r.status==='cancelled'?'#EF4444':'#F59E0B')+'">'+r.status+'</span></div></div>'
+      +'<div class="user-row-actions"><button class="btn btn-xs btn-success" onclick="completeRent('+r.id+')"><i class="fas fa-check"></i></button><button class="btn btn-xs btn-danger" onclick="cancelRent('+r.id+')"><i class="fas fa-times"></i></button></div></div>'
+    ).join('');
+  } catch(e) {}
+}
+
+async function loadAnalytics() {
+  try {
+    const res = await fetch('/api/stats');
+    const s = await res.json();
+    document.getElementById('anNewUsers').textContent = s.totalUsers || 0;
+    document.getElementById('anNewAds').textContent = s.totalAds || 0;
+    document.getElementById('anTotalViews').textContent = (allAds||[]).reduce((a,b)=>a+b.views,0);
+    document.getElementById('anTotalLikes').textContent = (allAds||[]).reduce((a,b)=>a+b.likes,0);
+    document.getElementById('anRents').textContent = s.totalRents || 0;
+    document.getElementById('anRevenue').textContent = (s.totalRevenue||0).toLocaleString();
+    // Category stats
+    const catCounts = {};
+    (allAds||[]).forEach(a => { catCounts[a.category] = (catCounts[a.category]||0) + 1; });
+    const cats = Object.entries(catCounts).sort((a,b) => b[1]-a[1]);
+    document.getElementById('categoryStats').innerHTML = cats.map(([cat,count]) =>
+      '<div class="settings-row"><span class="label">'+cat+'</span><span class="value">'+count+' объявл.</span></div>'
+    ).join('');
+  } catch(e) {}
+}
+
+// ACTIONS
+async function verifyUser(id){ await fetch('/api/users/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({verified:true})}); showToast('Верифицирован!'); loadUsers(); loadStats(); }
+async function unverifyUser(id){ await fetch('/api/users/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({verified:false})}); showToast('Верификация снята'); loadUsers(); }
+async function toggleBlock(id){ const u=allUsers.find(x=>x.id===id); await fetch('/api/users/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({blocked:!u.blocked})}); showToast(u.blocked?'Разблокирован':'Заблокирован'); loadUsers(); }
+async function deleteUser(id){ if(!confirm('Удалить пользователя?')) return; await fetch('/api/users/'+id,{method:'DELETE'}); showToast('Удалён'); loadUsers(); loadStats(); }
+async function toggleAd(id){ const a=allAds.find(x=>x.id===id); await fetch('/api/ads/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({hidden:!a.hidden})}); showToast(a.hidden?'Объявление показано':'Скрыто'); loadAdsAdmin(); }
+async function deleteAd(id){ if(!confirm('Удалить?')) return; await fetch('/api/ads/'+id,{method:'DELETE'}); showToast('Удалено'); loadAdsAdmin(); loadStats(); }
+async function resolveReport(id){ await fetch('/api/reports/'+id,{method:'DELETE'}); showToast('Решено'); loadReports(); }
+async function deleteReport(id){ await fetch('/api/reports/'+id,{method:'DELETE'}); showToast('Удалено'); loadReports(); }
+async function deleteReview(id){ await fetch('/api/reviews/'+id,{method:'DELETE'}); showToast('Удалён'); loadReviewsAdmin(); }
+async function completeRent(id){ await fetch('/api/rents/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'completed'})}); showToast('Завершена'); loadRents(); }
+async function cancelRent(id){ await fetch('/api/rents/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'cancelled'})}); showToast('Отменена'); loadRents(); }
+
+async function saveSettings() {
+  const data = {
+    siteName: document.getElementById('setSiteName').value,
+    commission: +document.getElementById('setCommission').value,
+    minDeposit: +document.getElementById('setMinDeposit').value,
+    moderation: document.getElementById('setModeration').checked,
+    requiredVerify: document.getElementById('setRequiredVerify').checked,
+    openReg: document.getElementById('setOpenReg').checked,
+    maxPhotos: +document.getElementById('setMaxPhotos').value,
+    maxFileSize: +document.getElementById('setMaxFileSize').value
+  };
+  await fetch('/api/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  showToast('Настройки сохранены!');
+}
+
+async function saveFinancialSettings() {
+  const data = {
+    minPrice: +document.getElementById('setMinPrice').value,
+    maxPrice: +document.getElementById('setMaxPrice').value,
+    topPrice: +document.getElementById('setTopPrice').value,
+    promoPrice: +document.getElementById('setPromoPrice').value
+  };
+  await fetch('/api/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  showToast('Финансовые настройки сохранены!');
+}
+
+async function publishAd() {
+  const tags = document.getElementById('pubTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const data = {
+    title: document.getElementById('pubTitle').value,
+    category: document.getElementById('pubCategory').value,
+    price: +document.getElementById('pubPrice').value,
+    unit: document.getElementById('pubUnit').value,
+    desc: document.getElementById('pubDesc').value,
+    city: document.getElementById('pubCity').value,
+    deposit: +document.getElementById('pubDeposit').value,
+    tags,
+    isNew: document.getElementById('pubIsNew').checked,
+    discount: document.getElementById('pubDiscount').checked ? 10 : 0,
+    featured: document.getElementById('pubFeatured').checked,
+    landlordId: 1,
+    adminPublished: true
+  };
+  if(!data.title||!data.price||!data.category) return showToast('Заполните обязательные поля');
+  await fetch('/api/ads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  showToast('Опубликовано!'); loadAdsAdmin(); loadStats();
+  ['pubTitle','pubDesc','pubPrice','pubDeposit','pubTags'].forEach(id=>document.getElementById(id).value='');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');});});
+
+// PASSPORT MODAL
+let currentPassportUserId = null;
+function viewPassport(userId, userName, photoName) {
+  currentPassportUserId = userId;
+  document.getElementById('passportUserName').textContent = 'Пользователь: ' + userName;
+  const preview = document.getElementById('passportPhotoPreview');
+  if(photoName) {
+    preview.innerHTML = '<div style="background:var(--bg);padding:40px;border-radius:12px;text-align:center"><i class="fas fa-id-card" style="font-size:64px;color:var(--primary-light)"></i><p style="margin-top:12px;color:var(--text-secondary);font-size:13px">Фото паспорта: '+photoName+'</p><p style="color:var(--text-secondary);font-size:12px;margin-top:4px">(Фото сохранено на сервере)</p></div>';
+  } else {
+    preview.innerHTML = '<div style="background:var(--bg);padding:40px;border-radius:12px;text-align:center"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:#EF4444"></i><p style="margin-top:12px;color:var(--danger);font-size:13px">Паспорт не загружен</p></div>';
+  }
+  document.getElementById('passportModal').classList.add('show');
+}
+function closePassportModal() { document.getElementById('passportModal').classList.remove('show'); }
+function approvePassport() { if(currentPassportUserId) { approveVerification(currentPassportUserId); closePassportModal(); } }
+function rejectPassport() { if(currentPassportUserId) { rejectVerification(currentPassportUserId); closePassportModal(); } }
+
+loadStats(); loadUsers(); loadAdsAdmin(); loadReports(); loadReviewsAdmin(); loadRents();
+</script>
+</body>
+</html>

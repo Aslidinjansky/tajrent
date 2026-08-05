@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TajRent — Арендодатели</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo"><i class="fas fa-store"></i> Арендодатели</div>
+  <div class="header-actions">
+    <a href="ads.html" class="header-icon"><i class="fas fa-arrow-left"></i></a>
+    <a href="auth.html" class="header-icon"><i class="fas fa-sign-in-alt"></i></a>
+  </div>
+</div>
+
+<div class="page">
+  <div id="landlordList"></div>
+
+  <div id="myProfileSection" style="display:none;margin-top:20px;">
+    <div class="card profile-card">
+      <div class="profile-header">
+        <div class="profile-avatar" id="myAvatar">?</div>
+        <div class="profile-info">
+          <h2 id="myName">Имя</h2>
+          <p class="profile-city" id="myCity">Город</p>
+          <div class="profile-stats">
+            <div class="stat-box"><span id="mySubs">0</span><small>Подписчиков</small></div>
+            <div class="stat-box"><span id="myLikes">0</span><small>Лайков</small></div>
+            <div class="stat-box"><span id="myRating">0</span><small>Рейтинг</small></div>
+            <div class="stat-box"><span id="myAds">0</span><small>Объявлений</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-bio" id="myBio">Описание профиля</div>
+    </div>
+
+    <div class="landlord-tabs">
+      <button class="tab-btn active" data-tab="ads"><i class="fas fa-list"></i> Мои объявления</button>
+      <button class="tab-btn" data-tab="verification"><i class="fas fa-shield-alt"></i> Верификация</button>
+      <button class="tab-btn" data-tab="settings"><i class="fas fa-cog"></i> Настройки</button>
+      <button class="tab-btn" data-tab="stats"><i class="fas fa-chart-bar"></i> Статистика</button>
+      <button class="tab-btn" data-tab="rents"><i class="fas fa-key"></i> Аренды</button>
+    </div>
+
+    <div class="tab-content active" id="tab-ads">
+      <div class="ad-grid" id="myAdsList"></div>
+      <div class="edit-ad-form" id="editAdForm" style="display:none">
+        <h3><i class="fas fa-edit"></i> Редактировать объявление</h3>
+        <div class="form-group"><label class="form-label">Название</label><input class="form-input" id="editTitle"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Цена (₽)</label><input class="form-input" id="editPrice" type="number"></div>
+          <div class="form-group"><label class="form-label">Залог (₽)</label><input class="form-input" id="editDeposit" type="number"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Описание</label><textarea class="form-textarea" id="editDesc" rows="3"></textarea></div>
+        <div class="form-group"><label class="form-label">Теги (через запятую)</label><input class="form-input" id="editTags"></div>
+        <div class="checkbox-row">
+          <label class="checkbox-label"><input type="checkbox" id="editIsNew"> Новинка</label>
+          <label class="checkbox-label"><input type="checkbox" id="editDiscount"> Скидка</label>
+          <label class="checkbox-label"><input type="checkbox" id="editFeatured"> Продвижение</label>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn btn-primary" onclick="saveEditedAd()"><i class="fas fa-save"></i> Сохранить</button>
+          <button class="btn btn-outline" onclick="cancelEditAd()">Отмена</button>
+          <button class="btn btn-danger" onclick="deleteMyAd()" style="margin-left:auto"><i class="fas fa-trash"></i> Удалить</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-verification">
+      <div class="verification-card">
+        <div class="verification-status" id="verificationStatus">
+          <i class="fas fa-shield-alt" style="font-size:40px;color:#8B5CF6"></i>
+          <h3>Верификация аккаунта</h3>
+          <p>Отправьте фото паспорта для получения синей галочки.</p>
+        </div>
+        <div id="verificationForm">
+          <div class="upload-area" onclick="document.getElementById('passportUpload').click()">
+            <i class="fas fa-id-card"></i>
+            <p>Загрузите фото паспорта</p>
+            <span class="upload-hint">JPG, PNG. Макс 5MB</span>
+          </div>
+          <input type="file" id="passportUpload" accept="image/*" style="display:none" onchange="handlePassportUpload(event)">
+          <div class="passport-preview" id="passportPreview" style="display:none">
+            <img id="passportImg" src="" alt="Паспорт" style="max-width:100%;border-radius:8px;margin:12px 0;">
+            <button class="btn btn-primary btn-block" onclick="submitVerification()"><i class="fas fa-paper-plane"></i> Отправить на проверку</button>
+          </div>
+          <div class="verification-info">
+            <h4><i class="fas fa-info-circle"></i> Зачем нужна верификация?</h4>
+            <ul>
+              <li>Синяя галочка рядом с именем</li>
+              <li>Более высокий рейтинг доверия</li>
+              <li>Приоритетное отображение объявлений</li>
+              <li>Доступ к расширенным функциям</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-settings">
+      <div class="settings-list">
+        <div class="setting-item">
+          <i class="fas fa-user"></i>
+          <div class="setting-info"><label class="form-label">Имя</label><input class="form-input" id="setName" value=""></div>
+        </div>
+        <div class="setting-item">
+          <i class="fas fa-phone"></i>
+          <div class="setting-info"><label class="form-label">Телефон</label><input class="form-input" id="setPhone" value=""></div>
+        </div>
+        <div class="setting-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <div class="setting-info"><label class="form-label">Город</label>
+            <select class="form-select" id="setCity">
+              <option>Москва</option><option>Санкт-Петербург</option><option>Казань</option><option>Екатеринбург</option><option>Ростов-на-Дону</option><option>Новосибирск</option>
+            </select>
+          </div>
+        </div>
+        <div class="setting-item">
+          <i class="fas fa-pen"></i>
+          <div class="setting-info"><label class="form-label">О себе</label><textarea class="form-textarea" id="setBio" rows="2"></textarea></div>
+        </div>
+        <div class="setting-item">
+          <i class="fas fa-lock"></i>
+          <div class="setting-info"><label class="form-label">Новый пароль</label><input class="form-input" id="setPassword" type="password" placeholder="Оставьте пустым если не менять"></div>
+        </div>
+        <div class="setting-item">
+          <i class="fas fa-bell"></i>
+          <div class="setting-info">
+            <label class="form-label">Уведомления</label>
+            <div class="toggle-row"><label class="checkbox-label"><input type="checkbox" id="notifRent" checked> Аренды</label><label class="checkbox-label"><input type="checkbox" id="notifMsg" checked> Сообщения</label><label class="checkbox-label"><input type="checkbox" id="notifPromo"> Акции</label></div>
+          </div>
+        </div>
+        <div class="setting-item">
+          <i class="fas fa-eye"></i>
+          <div class="setting-info">
+            <label class="form-label">Приватность</label>
+            <div class="toggle-row"><label class="checkbox-label"><input type="checkbox" id="privPhone" checked> Показывать телефон</label><label class="checkbox-label"><input type="checkbox" id="privProfile" checked> Открытый профиль</label></div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="saveProfile()"><i class="fas fa-save"></i> Сохранить настройки</button>
+        <button class="btn btn-danger btn-block" style="margin-top:10px" onclick="if(confirm('Выйти из аккаунта?')){localStorage.removeItem('rentUser');window.location='auth.html'}"><i class="fas fa-sign-out-alt"></i> Выйти из аккаунта</button>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-stats">
+      <div class="stats-grid">
+        <div class="stats-card"><i class="fas fa-eye"></i><span id="statViews">0</span><small>Просмотров</small></div>
+        <div class="stats-card"><i class="fas fa-heart"></i><span id="statLikes">0</span><small>Лайков</small></div>
+        <div class="stats-card"><i class="fas fa-users"></i><span id="statSubs">0</span><small>Подписчиков</small></div>
+        <div class="stats-card"><i class="fas fa-key"></i><span id="statRents">0</span><small>Аренд</small></div>
+        <div class="stats-card"><i class="fas fa-ruble-sign"></i><span id="statRevenue">0</span><small>Доход (₽)</small></div>
+        <div class="stats-card"><i class="fas fa-star"></i><span id="statRating">0</span><small>Рейтинг</small></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-rents">
+      <div id="rentsList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <a href="ads.html" class="nav-item"><i class="fas fa-home"></i><span>Главная</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-heart"></i><span>Избранное</span></a>
+  <a href="ads.html" class="nav-item nav-center" id="navCreate"><i class="fas fa-plus"></i></a>
+  <a href="landlord.html" class="nav-item active"><i class="fas fa-store"></i><span>Арендодатели</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span>Профиль</span></a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser = null;
+let myAds = [];
+let editingAdId = null;
+
+async function init() {
+  currentUser = JSON.parse(localStorage.getItem('rentUser') || 'null');
+  await loadLandlords();
+  if(currentUser && currentUser.role === 'landlord') await renderMyProfile();
+  setupTabs();
+}
+
+async function loadLandlords() {
+  try {
+    const res = await fetch('/api/users');
+    const users = await res.json();
+    const landlords = users.filter(u => u.role === 'landlord' && !u.blocked);
+    document.getElementById('landlordList').innerHTML =
+      '<h2 style="padding:0 16px;margin-top:12px">Все арендодатели</h2>' +
+      landlords.map(l => {
+        const init = l.name.charAt(0);
+        return '<div class="landlord-list-item" onclick="viewLandlord('+l.id+')">'
+          +'<div class="landlord-avatar-lg">'+init+'</div>'
+          +'<div class="landlord-info"><h3>'+l.name+(l.verified?' <i class="fas fa-check-circle verified-badge"></i>':'')+'</h3>'
+          +'<p><i class="fas fa-map-marker-alt"></i> '+l.city+'</p>'
+          +'<div class="landlord-meta-row"><span><i class="fas fa-users"></i> '+l.subscribers+'</span><span><i class="fas fa-star"></i> '+l.rating+'</span><span><i class="fas fa-heart"></i> '+l.likes+'</span></div>'
+          +'</div></div>';
+      }).join('');
+  } catch(e) {
+    document.getElementById('landlordList').innerHTML = '<div class="empty-state"><p>Ошибка загрузки</p></div>';
+  }
+}
+
+function viewLandlord(id) { showToast('Профиль арендодателя #'+id); }
+
+async function renderMyProfile() {
+  document.getElementById('myProfileSection').style.display = 'block';
+  document.getElementById('landlordList').style.display = 'none';
+  const init = currentUser.name.charAt(0);
+  document.getElementById('myAvatar').textContent = init;
+  document.getElementById('myName').innerHTML = currentUser.name + (currentUser.verified ? ' <i class="fas fa-check-circle verified-badge"></i>' : '');
+  document.getElementById('myCity').textContent = currentUser.city;
+  document.getElementById('mySubs').textContent = currentUser.subscribers;
+  document.getElementById('myLikes').textContent = currentUser.likes;
+  document.getElementById('myRating').textContent = currentUser.rating;
+  document.getElementById('myBio').textContent = currentUser.bio || 'Нет описания';
+
+  try {
+    const res = await fetch('/api/ads/landlord/' + currentUser.id);
+    myAds = await res.json();
+    renderMyAds(myAds);
+    document.getElementById('myAds').textContent = myAds.length;
+  } catch(e) {}
+
+  document.getElementById('statViews').textContent = myAds.reduce((s,a) => s + a.views, 0);
+  document.getElementById('statLikes').textContent = myAds.reduce((s,a) => s + a.likes, 0);
+  document.getElementById('statRevenue').textContent = formatPrice(myAds.reduce((s,a) => s + a.views * 100, 0));
+
+  document.getElementById('setName').value = currentUser.name;
+  document.getElementById('setPhone').value = currentUser.phone;
+  document.getElementById('setCity').value = currentUser.city;
+  document.getElementById('setBio').value = currentUser.bio || '';
+
+  updateVerificationUI();
+}
+
+function renderMyAds(ads) {
+  const el = document.getElementById('myAdsList');
+  if(!ads.length) { el.innerHTML = '<div class="empty-state"><i class="fas fa-plus-circle"></i><p>У вас пока нет объявлений</p></div>'; return; }
+  el.innerHTML = ads.map(ad => {
+    const hasNew = ad.isNew ? '<span class="badge-new-sm"><i class="fas fa-sparkles" style="font-size:8px"></i> NEW</span>' : '';
+    const hasDiscount = ad.discount > 0 ? '<span class="badge-discount-sm"><i class="fas fa-percent" style="font-size:8px"></i> -'+ad.discount+'%</span>' : '';
+    return '<div class="ad-card-mini" onclick="editMyAd('+ad.id+')">'
+      +'<div class="ad-card-image-sm" style="background:linear-gradient(135deg,#667eea88,#764ba288)"><i class="fas fa-image"></i>'
+      +'<div class="ad-badges-sm">'+hasNew+hasDiscount+(ad.published?'':'<span class="badge-draft">Черновик</span>')+'</div>'
+      +'</div>'
+      +'<div class="ad-card-body-sm">'
+      +'<div class="ad-card-title-sm">'+ad.title+'</div>'
+      +'<div class="price-tag-sm">'+formatPrice(ad.price)+' ₽ / '+ad.unit+'</div>'
+      +'<div class="ad-stats-sm"><span><i class="fas fa-eye"></i> '+ad.views+'</span><span><i class="fas fa-heart"></i> '+ad.likes+'</span><span><i class="fas fa-comment"></i> '+(ad.commentCount||0)+'</span></div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function setupTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.onclick = function() {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+    };
+  });
+}
+
+function editMyAd(id) {
+  editingAdId = id;
+  const ad = myAds.find(a => a.id === id);
+  if(!ad) return;
+  document.getElementById('editTitle').value = ad.title;
+  document.getElementById('editPrice').value = ad.price;
+  document.getElementById('editDeposit').value = ad.deposit;
+  document.getElementById('editDesc').value = ad.desc;
+  document.getElementById('editTags').value = (ad.tags||[]).join(', ');
+  document.getElementById('editIsNew').checked = ad.isNew || false;
+  document.getElementById('editDiscount').checked = ad.discount > 0;
+  document.getElementById('editFeatured').checked = ad.featured || false;
+  document.getElementById('editAdForm').style.display = 'block';
+  document.getElementById('myAdsList').style.display = 'none';
+}
+
+function cancelEditAd() {
+  editingAdId = null;
+  document.getElementById('editAdForm').style.display = 'none';
+  document.getElementById('myAdsList').style.display = 'grid';
+}
+
+async function saveEditedAd() {
+  if(!editingAdId) return;
+  const tags = document.getElementById('editTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const data = {
+    title: document.getElementById('editTitle').value,
+    price: parseInt(document.getElementById('editPrice').value),
+    deposit: parseInt(document.getElementById('editDeposit').value),
+    desc: document.getElementById('editDesc').value,
+    tags,
+    isNew: document.getElementById('editIsNew').checked,
+    discount: document.getElementById('editDiscount').checked ? 10 : 0,
+    featured: document.getElementById('editFeatured').checked
+  };
+  try {
+    await fetch('/api/admin/ads/' + editingAdId, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+    showToast('Объявление обновлено!');
+    cancelEditAd();
+    await renderMyProfile();
+  } catch(e) { showToast('Ошибка сохранения'); }
+}
+
+async function deleteMyAd() {
+  if(!editingAdId || !confirm('Удалить объявление?')) return;
+  try {
+    await fetch('/api/ads/' + editingAdId, {method:'DELETE'});
+    showToast('Объявление удалено');
+    cancelEditAd();
+    await renderMyProfile();
+  } catch(e) { showToast('Ошибка'); }
+}
+
+function handlePassportUpload(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('passportImg').src = e.target.result;
+    document.getElementById('passportPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitVerification() {
+  if(!currentUser) return;
+  try {
+    await fetch('/api/users/' + currentUser.id + '/verification', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({passportPhoto:'passport_'+currentUser.id+'.jpg'})});
+    showToast('Фото паспорта отправлено на проверку!');
+    updateVerificationUI();
+  } catch(e) { showToast('Ошибка'); }
+}
+
+function updateVerificationUI() {
+  const status = document.getElementById('verificationStatus');
+  if(currentUser.verified) {
+    status.innerHTML = '<i class="fas fa-check-circle" style="font-size:40px;color:#10B981"></i><h3>Верифицирован!</h3><p>Ваш аккаунт подтверждён. Синяя галочка отображается в профиле.</p>';
+    document.getElementById('verificationForm').style.display = 'none';
+  } else if(currentUser.passportStatus === 'pending') {
+    status.innerHTML = '<i class="fas fa-hourglass-half" style="font-size:40px;color:#F59E0B"></i><h3>На проверке</h3><p>Паспорт отправлен на проверку. Обычно занимает до 24 часов.</p>';
+    document.getElementById('verificationForm').style.display = 'none';
+  } else if(currentUser.passportStatus === 'rejected') {
+    status.innerHTML = '<i class="fas fa-times-circle" style="font-size:40px;color:#EF4444"></i><h3>Отклонено</h3><p>Загрузите более чёткое фото паспорта.</p>';
+    document.getElementById('verificationForm').style.display = 'block';
+  }
+}
+
+async function saveProfile() {
+  if(!currentUser) return;
+  const data = {
+    name: document.getElementById('setName').value,
+    phone: document.getElementById('setPhone').value,
+    city: document.getElementById('setCity').value,
+    bio: document.getElementById('setBio').value,
+  };
+  const pwd = document.getElementById('setPassword').value;
+  if(pwd) data.password = pwd;
+  try {
+    const res = await fetch('/api/users/' + currentUser.id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+    const updated = await res.json();
+    localStorage.setItem('rentUser', JSON.stringify(updated));
+    currentUser = updated;
+    showToast('Настройки сохранены!');
+    await renderMyProfile();
+  } catch(e) { showToast('Ошибка сохранения'); }
+}
+
+function formatPrice(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+document.getElementById('navCreate').addEventListener('click',e=>{
+  e.preventDefault();
+  if(!currentUser){window.location='auth.html';return;}
+  if(currentUser.role!=='landlord'){showToast('Добавлять объявления могут только арендодатели');return;}
+  window.location='ads.html';
+});
+
+init();
+</script>
+</body>
+</html>
