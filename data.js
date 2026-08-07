@@ -143,6 +143,15 @@ const TAJRENT_DATA = {
 
       // Users
       if (path === 'users' && method === 'GET') return makeResponse(200, TAJRENT_DATA.users);
+      if (path === 'users' && method === 'POST') {
+        const body = JSON.parse(options.body);
+        if (TAJRENT_DATA.users.find(u => u.phone === body.phone)) return makeResponse(400, { error: 'Пользователь уже существует' });
+        const newUser = { id: Date.now(), name: body.name, phone: body.phone, password: body.password, role: body.role || 'tenant', city: body.city || '', bio: body.bio || '', verified: false, avatar: null, subscribers: 0, likes: 0, rating: 0, blocked: false, createdAt: new Date().toISOString().split('T')[0] };
+        TAJRENT_DATA.users.push(newUser);
+        saveToLocalStorage();
+        localStorage.setItem('rentUser', JSON.stringify({ id: newUser.id, name: newUser.name, role: newUser.role, phone: newUser.phone, verified: newUser.verified }));
+        return makeResponse(200, newUser);
+      }
       const userIdMatch = path.match(/^users\/(\d+)$/);
       if (userIdMatch) {
         const uid = parseInt(userIdMatch[1]);
