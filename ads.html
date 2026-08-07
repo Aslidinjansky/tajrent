@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TajRent — Объявления</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+.cat-circle-row { display:flex; gap:14px; padding:14px 16px; overflow-x:auto; scrollbar-width:none; max-width:480px; margin:0 auto; }
+.cat-circle-row::-webkit-scrollbar { display:none; }
+.cat-circle { flex-shrink:0; width:70px; text-align:center; cursor:pointer; transition:all .2s; }
+.cat-circle-img { width:62px; height:62px; border-radius:50%; border:3px solid var(--border);
+  overflow:hidden; display:flex; align-items:center; justify-content:center;
+  transition:all .3s; margin-bottom:6px;
+  background: linear-gradient(135deg, var(--primary-light), var(--accent-light)); }
+.cat-circle-img img { width:100%; height:100%; object-fit:cover; }
+.cat-circle-img i { font-size:26px; color:#fff; }
+.cat-circle.active .cat-circle-img { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); transform:scale(1.05); }
+.cat-circle span { font-size:10px; font-weight:600; color:var(--text-secondary); line-height:1.2; }
+.cat-circle.active span { color:var(--primary); }
+.ad-tags { display:flex; gap:4px; flex-wrap:wrap; margin:6px 0; }
+.ad-tag { font-size:10px; background:var(--primary-light); color:var(--primary); padding:3px 10px; border-radius:12px; font-weight:600; }
+.ad-badges { position:absolute; top:8px; left:8px; display:flex; gap:4px; flex-wrap:wrap; }
+.badge-new,.badge-discount,.badge-featured { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:20px; font-size:9px; font-weight:700; letter-spacing:0.3px; color:#fff; text-transform:uppercase; box-shadow:0 2px 10px rgba(0,0,0,0.25); line-height:1.2; }
+.badge-new { background:linear-gradient(135deg,#10B981,#059669); }
+.badge-discount { background:linear-gradient(135deg,#EF4444,#DC2626); }
+.badge-featured { background:linear-gradient(135deg,#F59E0B,#D97706); }
+.badge-new i,.badge-discount i,.badge-featured i { font-size:8px; }
+.filter-panel { max-height:0; overflow:hidden; transition:max-height .3s; background:#fff; padding:0 16px; max-width:480px; margin:0 auto; }
+.filter-panel.show { max-height:300px; padding:12px 16px; border-bottom:1px solid var(--border); }
+.filter-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; font-size:13px; }
+.filter-row label { font-weight:600; color:var(--text-secondary); white-space:nowrap; }
+.search-filter-btn { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:16px; padding:8px; }
+.results-info { padding:8px 16px; display:flex; align-items:center; gap:8px; font-size:13px; max-width:480px; margin:0 auto; }
+.results-tag { background:var(--primary-light); color:var(--primary); padding:3px 12px; border-radius:14px; font-weight:600; }
+.results-count { color:var(--text-secondary); }
+.popular-tags { display:flex; gap:6px; padding:8px 16px; overflow-x:auto; scrollbar-width:none; max-width:480px; margin:0 auto; }
+.popular-tags::-webkit-scrollbar { display:none; }
+.tag-btn { flex-shrink:0; padding:5px 12px; border-radius:14px; border:1px solid var(--border); background:#fff;
+  font-size:12px; font-weight:500; color:var(--text-secondary); cursor:pointer; font-family:var(--font); transition:all .2s; }
+.tag-btn:hover, .tag-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.tag-btn i { font-size:10px; margin-right:3px; }
+.preview-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px; }
+.preview-item { position:relative; border-radius:12px; overflow:hidden; aspect-ratio:1; }
+.preview-item img { width:100%; height:100%; object-fit:cover; }
+.preview-remove { position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%;
+  background:rgba(0,0,0,.5); color:#fff; border:none; cursor:pointer; font-size:10px; display:flex; align-items:center; justify-content:center; }
+.liked { color:var(--accent)!important; }
+.landlord-avatar-liked { background:var(--accent)!important; }
+.discount-price { color:#EF4444; font-weight:700; }
+.old-price { text-decoration:line-through; color:var(--text-secondary); font-size:12px; margin-left:6px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo"><i class="fas fa-store"></i> TajRent</div>
+  <div class="header-actions">
+    <a href="admin.html" class="header-icon" id="adminLink" style="display:none"><i class="fas fa-shield-alt"></i></a>
+    <a href="#" class="header-icon" onclick="showNotifications(event)"><i class="fas fa-bell"></i><span class="badge" id="notifBadge">3</span></a>
+    <a href="profile.html" class="header-icon"><i class="fas fa-user-circle"></i></a>
+  </div>
+</div>
+
+<div class="search-bar">
+  <div class="search-wrapper">
+    <i class="fas fa-search"></i>
+    <input class="search-input" type="text" placeholder="Поиск объявлений, тегов..." id="searchInput">
+    <button class="search-filter-btn" onclick="toggleFilters()"><i class="fas fa-sliders-h"></i></button>
+  </div>
+</div>
+
+<div class="filter-panel" id="filterPanel">
+  <div class="filter-row">
+    <label>Цена от:</label><input class="form-input" id="filterPriceFrom" type="number" placeholder="0" style="width:80px;height:34px;font-size:12px;">
+    <label>до:</label><input class="form-input" id="filterPriceTo" type="number" placeholder="100000" style="width:80px;height:34px;font-size:12px;">
+    <button class="btn btn-sm btn-primary" onclick="applyFilters()"><i class="fas fa-check"></i></button>
+  </div>
+  <div class="filter-row">
+    <label>Город:</label>
+    <select class="form-select" id="filterCity" style="width:120px;height:34px;font-size:12px;">
+      <option value="">Все</option><option>Москва</option><option>Санкт-Петербург</option><option>Казань</option><option>Екатеринбург</option><option>Ростов-на-Дону</option><option>Новосибирск</option>
+    </select>
+    <label>Скидка:</label>
+    <select class="form-select" id="filterDiscount" style="width:100px;height:34px;font-size:12px;">
+      <option value="">Все</option><option value="1">Со скидкой</option>
+    </select>
+    <label>Новинки:</label>
+    <select class="form-select" id="filterNew" style="width:100px;height:34px;font-size:12px;">
+      <option value="">Все</option><option value="1">Только новые</option>
+    </select>
+  </div>
+</div>
+
+<div class="cat-circle-row" id="categories"></div>
+
+<div class="popular-tags" id="popularTags"></div>
+
+<div class="sort-tabs" id="sortTabs">
+  <button class="sort-tab active" data-sort="popular"><i class="fas fa-fire"></i> Популярные</button>
+  <button class="sort-tab" data-sort="new"><i class="fas fa-clock"></i> Новые</button>
+  <button class="sort-tab" data-sort="cheap"><i class="fas fa-arrow-down"></i> Дешевле</button>
+  <button class="sort-tab" data-sort="rating"><i class="fas fa-star"></i> Рейтинг</button>
+  <button class="sort-tab" data-sort="featured"><i class="fas fa-crown"></i> ТОП</button>
+</div>
+
+<div class="results-info" id="resultsInfo"></div>
+
+<div class="page">
+  <div id="adsList"></div>
+</div>
+
+<button class="fab fab-help" onclick="toggleChat()"><i class="fas fa-question"></i></button>
+
+<div class="bottom-nav">
+  <a href="ads.html" class="nav-item active"><i class="fas fa-home"></i><span>Главная</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-heart"></i><span>Избранное</span></a>
+  <a href="#" class="nav-item nav-center" id="createAdBtn"><i class="fas fa-plus"></i></a>
+  <a href="landlord.html" class="nav-item"><i class="fas fa-store"></i><span>Арендодатели</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span>Профиль</span></a>
+</div>
+
+<!-- RENT MODAL -->
+<div class="modal-overlay" id="rentModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title"><i class="fas fa-key"></i> Арендовать</h3>
+    <div id="rentAdInfo" style="margin-bottom:16px;"></div>
+    <div class="rent-options">
+      <div class="rent-option" onclick="rentViaApp()">
+        <i class="fas fa-shield-alt" style="font-size:24px;color:var(--primary)"></i>
+        <div><b>Залог через приложение</b><br><small style="color:var(--text-secondary)">Безопасная сделка — залог удерживается приложением</small></div>
+      </div>
+      <div class="rent-option" onclick="chatWithLandlord()">
+        <i class="fas fa-comment-dots" style="font-size:24px;color:var(--accent)"></i>
+        <div><b>Написать арендодателю</b><br><small style="color:var(--text-secondary)">Обсудить условия напрямую</small></div>
+      </div>
+      <div class="rent-option" onclick="getPhone()">
+        <i class="fas fa-phone" style="font-size:24px;color:var(--success)"></i>
+        <div><b>Получить номер телефона</b><br><small style="color:var(--text-secondary)">Позвонить арендодателю</small></div>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-block" style="margin-top:12px" onclick="closeModal('rentModal')"><i class="fas fa-times"></i> Отмена</button>
+  </div>
+</div>
+
+<!-- CREATE AD MODAL -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal modal-lg">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title"><i class="fas fa-plus-circle"></i> Создать объявление</h3>
+
+    <div class="form-group"><label class="form-label">Название *</label><input class="form-input" id="newTitle" placeholder="Например: Свадебное платье 'Ариана'"></div>
+
+    <div class="form-group"><label class="form-label">Категория *</label>
+      <select class="form-select" id="newCategory">
+        <option value="">Выберите категорию</option>
+        <option value="Платья">👗 Платья</option><option value="Костюмы">👔 Костюмы</option>
+        <option value="Авто">🚗 Авто</option><option value="Гостиницы">🏨 Гостиницы</option>
+        <option value="Дачи">🏡 Дачи</option><option value="Квартиры">🏢 Квартиры</option>
+        <option value="Техника">📷 Техника</option><option value="Другое">📦 Другое</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Цена (₽) *</label><input class="form-input" id="newPrice" type="number" placeholder="2500"></div>
+      <div class="form-group"><label class="form-label">За</label>
+        <select class="form-select" id="newUnit">
+          <option value="день">День</option><option value="ночь">Ночь</option>
+          <option value="сутки">Сутки</option><option value="час">Час</option><option value="неделю">Неделю</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Город *</label>
+        <select class="form-select" id="newCity">
+          <option>Москва</option><option>Санкт-Петербург</option><option>Казань</option><option>Екатеринбург</option><option>Ростов-на-Дону</option><option>Новосибирск</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Залог (₽)</label><input class="form-input" id="newDeposit" type="number" placeholder="1000"></div>
+    </div>
+
+    <div class="form-group"><label class="form-label">Адрес</label><input class="form-input" id="newAddress" placeholder="ул. Примерная, 1"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Площадь (м²)</label><input class="form-input" id="newSize" type="number" placeholder="50"></div>
+      <div class="form-group"><label class="form-label">Комнат</label><input class="form-input" id="newRooms" type="number" placeholder="2"></div>
+    </div>
+
+    <div class="form-group"><label class="form-label">Описание *</label><textarea class="form-textarea" id="newDesc" rows="3" placeholder="Подробно опишите ваш товар или услугу..."></textarea></div>
+
+    <div class="form-group"><label class="form-label">Теги (через запятую)</label><input class="form-input" id="newTags" placeholder="свадьба, новое, размер-m"></div>
+    <div class="form-group"><label class="form-label">Удобства (через запятую)</label><input class="form-input" id="newAmenities" placeholder="wi-fi, парковка, кондиционер"></div>
+
+    <div class="form-group"><label class="form-label">Фото</label>
+      <div class="upload-area" onclick="document.getElementById('newImages').click()">
+        <i class="fas fa-cloud-upload-alt"></i><p>Нажмите для загрузки фото</p><span class="upload-hint">JPG, PNG до 10MB. Макс 10 фото</span>
+      </div>
+      <input type="file" id="newImages" multiple accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+      <div class="preview-grid" id="imagePreview"></div>
+    </div>
+
+    <div class="form-group"><label class="form-label">Видео (ссылка YouTube)</label><input class="form-input" id="newVideo" placeholder="https://youtube.com/watch?v=..."></div>
+
+    <div class="form-group"><label class="form-label">Метки</label>
+      <div class="checkbox-row">
+        <label class="checkbox-label"><input type="checkbox" id="newIsNew"> <span style="color:#10B981;font-weight:700">✨ Новинка</span></label>
+        <label class="checkbox-label"><input type="checkbox" id="newDiscount"> <span style="color:#EF4444;font-weight:700">🔥 Скидка</span></label>
+        <label class="checkbox-label"><input type="checkbox" id="newFeatured"> <span style="color:#F59E0B;font-weight:700">👑 Продвижение</span></label>
+      </div>
+    </div>
+    <div class="form-group" id="discountPercentGroup" style="display:none">
+      <label class="form-label">Размер скидки (%)</label><input class="form-input" id="newDiscountPercent" type="number" placeholder="10" min="1" max="90">
+    </div>
+
+    <div class="form-group"><label class="form-label">Дополнительные условия</label><textarea class="form-textarea" id="newConditions" rows="2" placeholder="Условия аренды, правила использования..."></textarea></div>
+
+    <div class="form-group"><label class="form-label">Контакты</label><input class="form-input" id="newContact" placeholder="Дополнительный номер или Telegram"></div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary btn-block" onclick="createAd()"><i class="fas fa-paper-plane"></i> Опубликовать</button>
+      <button class="btn btn-outline" onclick="closeModal('createModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- LANDLORD CHECK MODAL -->
+<div class="modal-overlay" id="landlordCheckModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="empty-state">
+      <i class="fas fa-user-shield"></i>
+      <p>Добавлять объявления могут только арендодатели</p>
+      <button class="btn btn-primary" onclick="closeModal('landlordCheckModal');window.location='auth.html'">Стать арендодателем</button>
+      <button class="btn btn-outline" onclick="closeModal('landlordCheckModal')">Понятно</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="chat-widget" id="chatWidget">
+  <div class="chat-header"><span><i class="fas fa-headset"></i> Поддержка TajRent</span><button class="header-icon" style="background:none;font-size:14px;" onclick="toggleChat()"><i class="fas fa-times"></i></button></div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg support"><div class="chat-bubble">Здравствуйте! Чем могу помочь?</div></div>
+    <div class="chat-msg support"><div class="chat-bubble">Я могу помочь с:<br>• Оформление аренды<br>• Вопросы по верификации<br>• Жалобы на объявления<br>• Технические вопросы</div></div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" placeholder="Написать..." id="chatInput" onkeypress="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentCat = 'all';
+let currentSort = 'popular';
+let allAds = [];
+let currentUser = null;
+let uploadedImages = [];
+
+const CAT_DATA = {
+  'Платья': {icon:'fa-tshirt', color:'#EC4899'},
+  'Костюмы': {icon:'fa-user-tie', color:'#8B5CF6'},
+  'Авто': {icon:'fa-car', color:'#3B82F6'},
+  'Гостиницы': {icon:'fa-hotel', color:'#F59E0B'},
+  'Дачи': {icon:'fa-home', color:'#10B981'},
+  'Квартиры': {icon:'fa-building', color:'#6366F1'},
+  'Техника': {icon:'fa-camera', color:'#14B8A6'},
+  'Другое': {icon:'fa-box', color:'#6B7280'}
+};
+
+async function init() {
+  currentUser = JSON.parse(localStorage.getItem('rentUser') || 'null');
+  if(currentUser && currentUser.role === 'admin') document.getElementById('adminLink').style.display = '';
+  await renderCategories();
+  await renderPopularTags();
+  await loadAds();
+  setupSortTabs();
+  setupSearch();
+}
+
+async function renderCategories() {
+  const res = await fetch('/api/categories');
+  const cats = await res.json();
+  const el = document.getElementById('categories');
+  let html = '<div class="cat-circle '+(currentCat==='all'?'active':'')+'" data-cat="all" onclick="selectCat(\'all\')">';
+  html += '<div class="cat-circle-img"><i class="fas fa-th"></i></div>';
+  html += '<span>Все</span></div>';
+  cats.forEach(function(c) {
+    var d = CAT_DATA[c.name] || {icon:'fa-box',color:'#6B7280'};
+    html += '<div class="cat-circle '+(currentCat===c.name?'active':'')+'" data-cat="'+c.name+'" onclick="selectCat(\''+c.name+'\')">';
+    html += '<div class="cat-circle-img" style="background:linear-gradient(135deg,'+d.color+' 0%,'+d.color+'88 100%)">';
+    html += '<i class="fas '+d.icon+'" style="font-size:28px;color:#fff"></i>';
+    html += '</div>';
+    html += '<span>'+c.name+'</span>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function selectCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-circle').forEach(c => c.classList.remove('active'));
+  const btn = document.querySelector('.cat-circle[data-cat="'+cat+'"]');
+  if(btn) btn.classList.add('active');
+  loadAds();
+}
+
+async function renderPopularTags() {
+  try {
+    const res = await fetch('/api/tags');
+    const tags = await res.json();
+    const el = document.getElementById('popularTags');
+    el.innerHTML = tags.slice(0, 10).map(t => '<button class="tag-btn" onclick="filterByTag(\''+t.name+'\')"><i class="fas fa-hashtag"></i> '+t.name+'</button>').join('');
+  } catch(e) {}
+}
+
+function filterByTag(tag) {
+  renderAds(allAds.filter(a => (a.tags||[]).includes(tag)));
+  document.getElementById('resultsInfo').innerHTML = '<span class="results-tag">Тег: <b>'+tag+'</b></span> <button class="btn btn-sm btn-outline" onclick="loadAds()">Сбросить</button>';
+}
+
+async function loadAds() {
+  try {
+    document.getElementById('resultsInfo').innerHTML = '';
+    const params = new URLSearchParams();
+    if(currentCat !== 'all') params.set('category', currentCat);
+    if(currentSort !== 'popular') params.set('sort', currentSort);
+    const url = '/api/ads' + (params.toString() ? '?' + params.toString() : '');
+    const res = await fetch(url);
+    allAds = await res.json();
+    renderAds(allAds);
+  } catch(e) {
+    document.getElementById('adsList').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Ошибка загрузки</p></div>';
+  }
+}
+
+function renderAds(ads) {
+  const list = document.getElementById('adsList');
+  if(!ads.length) { list.innerHTML='<div class="empty-state"><i class="fas fa-search"></i><p>Ничего не найдено</p></div>'; return; }
+  list.innerHTML = ads.map(ad => {
+    const init = ad.landlordName ? ad.landlordName.charAt(0) : '?';
+    const hasNew = ad.isNew ? '<span class="badge-new"><i class="fas fa-sparkles"></i> НОВИНКА</span>' : '';
+    const hasDiscount = ad.discount > 0 ? '<span class="badge-discount"><i class="fas fa-percent"></i> -'+ad.discount+'%</span>' : '';
+    const hasFeatured = ad.featured ? '<span class="badge-featured"><i class="fas fa-crown"></i> ТОП</span>' : '';
+    const tagsHtml = (ad.tags||[]).slice(0,3).map(t => '<span class="ad-tag">#'+t+'</span>').join('');
+    const d = CAT_DATA[ad.category] || {icon:'fa-box',color:'#6B7280'};
+    const priceHtml = ad.discount > 0
+      ? '<span class="discount-price">'+formatPrice(Math.round(ad.price*(1-ad.discount/100)))+' ₽</span><span class="old-price">'+formatPrice(ad.price)+' ₽</span>'
+      : formatPrice(ad.price)+' ₽';
+    return '<div class="ad-card" onclick="openAd('+ad.id+')">'
+      +'<div class="ad-card-image" style="background:linear-gradient(135deg,'+d.color+'88,'+d.color+'44)"><i class="fas '+d.icon+'" style="font-size:48px;opacity:0.3;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></i>'
+      +'<div class="ad-badges">'+hasNew+hasDiscount+hasFeatured+'</div>'
+      +'<div class="price-tag">'+priceHtml+' / '+ad.unit+'</div></div>'
+      +'<div class="ad-card-body">'
+      +'<div class="ad-card-title">'+ad.title+'</div>'
+      +'<div class="ad-card-cat"><i class="fas '+d.icon+'" style="color:'+d.color+'"></i> '+ad.category+'</div>'
+      +'<div class="ad-tags">'+tagsHtml+'</div>'
+      +'<div class="ad-card-landlord"><div class="landlord-avatar">'+init+'</div><span>'+ad.landlordName+'</span>'
+      +(ad.landlordVerified?'<i class="fas fa-check-circle verified-badge"></i>':'')+'</div>'
+      +'<div class="ad-card-stats">'
+      +'<span class="stat-item"><i class="fas fa-eye"></i> '+ad.views+'</span>'
+      +'<span class="stat-item liked"><i class="fas fa-heart"></i> '+ad.likes+'</span>'
+      +'<span class="stat-item"><i class="fas fa-comment"></i> '+(ad.commentCount||0)+'</span>'
+      +'<span class="stat-item rated"><i class="fas fa-star"></i> '+calcRating(ad)+'</span>'
+      +'<span class="stat-item" style="margin-left:auto;">'+timeAgo(ad.createdAt)+'</span>'
+      +'</div></div></div>';
+  }).join('');
+}
+
+function setupSortTabs() {
+  document.querySelectorAll('.sort-tab').forEach(tab => {
+    tab.onclick = function(){
+      document.querySelectorAll('.sort-tab').forEach(t=>t.classList.remove('active'));
+      this.classList.add('active'); currentSort=this.dataset.sort; loadAds();
+    };
+  });
+}
+
+function setupSearch() {
+  let timer;
+  document.getElementById('searchInput').addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(()=>{
+      const q = this.value.toLowerCase();
+      const filtered = allAds.filter(a=>a.title.toLowerCase().includes(q)||a.desc.toLowerCase().includes(q)||(a.tags||[]).some(t=>t.toLowerCase().includes(q)));
+      renderAds(filtered);
+      if(this.value) document.getElementById('resultsInfo').innerHTML = '<span class="results-tag">Поиск: <b>'+this.value+'</b></span> <span class="results-count">Найдено: '+filtered.length+'</span>';
+      else document.getElementById('resultsInfo').innerHTML = '';
+    },300);
+  });
+}
+
+function toggleFilters() {
+  document.getElementById('filterPanel').classList.toggle('show');
+}
+
+function applyFilters() {
+  const from = parseInt(document.getElementById('filterPriceFrom').value) || 0;
+  const to = parseInt(document.getElementById('filterPriceTo').value) || Infinity;
+  const city = document.getElementById('filterCity').value;
+  const discount = document.getElementById('filterDiscount').value;
+  const isNew = document.getElementById('filterNew').value;
+  let filtered = allAds.filter(a => a.price >= from && a.price <= to);
+  if(city) filtered = filtered.filter(a => a.city === city);
+  if(discount) filtered = filtered.filter(a => a.discount > 0);
+  if(isNew) filtered = filtered.filter(a => a.isNew);
+  renderAds(filtered);
+  document.getElementById('resultsInfo').innerHTML = '<span class="results-tag">Фильтры применены</span> <span class="results-count">Найдено: '+filtered.length+'</span> <button class="btn btn-sm btn-outline" onclick="loadAds()">Сбросить</button>';
+}
+
+function openAd(id) { window.open('ad-detail.html?id='+id,'_blank'); }
+
+function formatPrice(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
+function calcRating(ad){const r=ad.likes>0?Math.min(5,3+ad.likes/10):0;return r>0?r.toFixed(1):'—';}
+function timeAgo(date){const d=Math.floor((Date.now()-new Date(date).getTime())/86400000);if(d===0)return'Сегодня';if(d===1)return'Вчера';if(d<7)return d+' дн';if(d<30)return Math.floor(d/7)+' нед';return Math.floor(d/30)+' мес';}
+
+function handleImageUpload(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      uploadedImages.push(e.target.result);
+      renderImagePreview();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function renderImagePreview() {
+  const el = document.getElementById('imagePreview');
+  el.innerHTML = uploadedImages.map((src, i) =>
+    '<div class="preview-item"><img src="'+src+'"><button class="preview-remove" onclick="removeImage('+i+')"><i class="fas fa-times"></i></button></div>'
+  ).join('');
+}
+
+function removeImage(i) { uploadedImages.splice(i,1); renderImagePreview(); }
+
+function createAd(){
+  if(!currentUser || currentUser.role !== 'landlord') {
+    closeModal('createModal');
+    return document.getElementById('landlordCheckModal').classList.add('show');
+  }
+  const tags = document.getElementById('newTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const amenities = document.getElementById('newAmenities').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const data = {
+    title: document.getElementById('newTitle').value,
+    category: document.getElementById('newCategory').value,
+    price: document.getElementById('newPrice').value,
+    unit: document.getElementById('newUnit').value,
+    desc: document.getElementById('newDesc').value,
+    deposit: document.getElementById('newDeposit').value,
+    city: document.getElementById('newCity').value,
+    landlordId: currentUser.id,
+    address: document.getElementById('newAddress').value,
+    size: document.getElementById('newSize').value,
+    rooms: document.getElementById('newRooms').value,
+    tags, amenities,
+    images: uploadedImages,
+    video: document.getElementById('newVideo').value,
+    conditions: document.getElementById('newConditions').value,
+    contact: document.getElementById('newContact').value,
+    isNew: document.getElementById('newIsNew').checked,
+    discount: document.getElementById('newDiscount').checked ? (parseInt(document.getElementById('newDiscountPercent').value)||10) : 0,
+    featured: document.getElementById('newFeatured').checked
+  };
+  if(!data.title||!data.price||!data.category) return showToast('Заполните название, цену и категорию');
+  fetch('/api/ads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(r=>r.json()).then(()=>{closeModal('createModal');showToast('Объявление создано!');loadAds();})
+    .catch(()=>showToast('Ошибка'));
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function toggleChat(){document.getElementById('chatWidget').classList.toggle('show');}
+function sendChat(){
+  const input=document.getElementById('chatInput');const text=input.value.trim();if(!text)return;
+  const msgs=document.getElementById('chatMessages');
+  msgs.innerHTML+='<div class="chat-msg user"><div class="chat-bubble">'+text+'</div></div>';
+  input.value='';msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(()=>{msgs.innerHTML+='<div class="chat-msg support"><div class="chat-bubble">Спасибо за сообщение! Администратор ответит в ближайшее время.</div></div>';msgs.scrollTop=msgs.scrollHeight;},1000);
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+function showNotifications(e){e.preventDefault();showToast('У вас 3 новых уведомления');}
+
+function rentViaApp(){closeModal('rentModal');showToast('Заявка на аренду отправлена! Залог будет удержан через приложение.');}
+function chatWithLandlord(){closeModal('rentModal');showToast('Открываем чат с арендодателем...');}
+function getPhone(){closeModal('rentModal');showToast('Номер арендодателя: +7 (999) 123-45-67');}
+
+document.getElementById('createAdBtn').addEventListener('click',e=>{
+  e.preventDefault();
+  if(!currentUser) { document.getElementById('landlordCheckModal').classList.add('show'); return; }
+  if(currentUser.role !== 'landlord') { document.getElementById('landlordCheckModal').classList.add('show'); return; }
+  document.getElementById('createModal').classList.add('show');
+});
+
+document.getElementById('newDiscount').addEventListener('change',function(){
+  document.getElementById('discountPercentGroup').style.display = this.checked ? 'block' : 'none';
+});
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');});});
+
+init();
+</script>
+</body>
+</html>

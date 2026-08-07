@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TajRent — Вход</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#F8F7FF 0%,#E8E6FF 100%);}
+.auth-card{width:100%;max-width:400px;background:#fff;border-radius:24px;padding:32px;box-shadow:0 12px 48px rgba(124,92,252,0.15);}
+.auth-logo{text-align:center;margin-bottom:24px;}
+.auth-logo .logo-icon{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:#fff;font-size:32px;box-shadow:0 6px 24px rgba(124,92,252,0.35);}
+.auth-logo h1{font-size:26px;font-weight:800;color:var(--text);letter-spacing:-0.5px;}
+.auth-logo p{font-size:13px;color:var(--text-secondary);margin-top:4px;}
+.auth-tabs{display:flex;margin-bottom:20px;background:var(--bg);border-radius:12px;padding:4px;}
+.auth-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;border-radius:10px;transition:all 0.3s;background:none;border:none;font-family:var(--font);}
+.auth-tab.active{background:#fff;color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,0.08);border-radius:12px;}
+.auth-form{display:none;}
+.auth-form.active{display:block;}
+.role-selector{display:flex;gap:10px;margin-bottom:16px;}
+.role-btn{flex:1;padding:12px;border-radius:12px;border:2px solid var(--border);background:#fff;text-align:center;cursor:pointer;transition:all 0.3s;font-family:var(--font);}
+.role-btn.active{border-color:var(--primary);background:rgba(124,92,252,0.05);}
+.role-btn i{font-size:24px;color:var(--primary);margin-bottom:6px;display:block;}
+.role-btn span{font-size:12px;font-weight:600;color:var(--text);}
+</style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon"><i class="fas fa-home"></i></div>
+      <h1>TajRent</h1>
+      <p>Аренда проще, чем кажется</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="showForm('login',this)">Вход</button>
+      <button class="auth-tab" onclick="showForm('register',this)">Регистрация</button>
+    </div>
+    <div class="auth-form active" id="formLogin">
+      <div class="form-group"><label class="form-label">Телефон</label><input class="form-input" id="loginPhone" placeholder="+7 999 123-45-67"></div>
+      <div class="form-group"><label class="form-label">Пароль</label><input class="form-input" id="loginPassword" type="password" placeholder="Пароль"></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <label class="toggle"><input type="checkbox" id="isAdminLogin"><span class="toggle-slider"></span></label>
+        <span style="font-size:12px;color:var(--text-secondary);">Войти как админ</span>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Войти</button>
+    </div>
+    <div class="auth-form" id="formRegister">
+      <div class="form-group"><label class="form-label">Имя</label><input class="form-input" id="regName" placeholder="Ваше имя"></div>
+      <div class="form-group"><label class="form-label">Телефон</label><input class="form-input" id="regPhone" placeholder="+7 999 123-45-67"></div>
+      <div class="form-group"><label class="form-label">Пароль</label><input class="form-input" id="regPassword" type="password" placeholder="Пароль"></div>
+      <div class="form-group"><label class="form-label">Город</label><input class="form-input" id="regCity" placeholder="Москва"></div>
+      <label class="form-label">Роль</label>
+      <div class="role-selector">
+        <div class="role-btn active" onclick="selectRole('tenant',this)"><i class="fas fa-user"></i><span>Арендатор</span></div>
+        <div class="role-btn" onclick="selectRole('landlord',this)"><i class="fas fa-store"></i><span>Арендодатель</span></div>
+      </div>
+      <button class="btn btn-accent btn-block" style="margin-top:12px;" onclick="doRegister()"><i class="fas fa-user-plus"></i> Зарегистрироваться</button>
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="ads.html" style="font-size:12px;color:var(--text-secondary);text-decoration:none;">Пропустить и перейти к объявлениям</a>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+let selectedRole='tenant';
+function showForm(name,btn){
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
+  document.getElementById(name==='login'?'formLogin':'formRegister').classList.add('active');
+}
+function selectRole(role,el){
+  selectedRole=role;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+async function doLogin(){
+  const phone=document.getElementById('loginPhone').value;
+  const password=document.getElementById('loginPassword').value;
+  const isAdmin=document.getElementById('isAdminLogin').checked;
+  if(!phone||!password)return showToast('Заполните поля');
+  if(isAdmin){
+    if(phone==='admin'&&password==='admin'){window.location.href='admin.html';return;}
+    return showToast('Неверные данные админа');
+  }
+  try{
+    const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password})});
+    const data=await res.json();
+    if(data.user){
+      localStorage.setItem('rentUser', JSON.stringify(data.user));
+      window.location.href='ads.html';
+    }else{showToast('Неверный телефон или пароль');}
+  }catch(e){showToast('Ошибка подключения');}
+}
+async function doRegister(){
+  const name=document.getElementById('regName').value;
+  const phone=document.getElementById('regPhone').value;
+  const password=document.getElementById('regPassword').value;
+  const city=document.getElementById('regCity').value||'Москва';
+  if(!name||!phone||!password)return showToast('Заполните все поля');
+  try{
+    const res=await fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,password,role:selectedRole,city})});
+    const data=await res.json();
+    if(data.id){
+      localStorage.setItem('rentUser', JSON.stringify(data));
+      showToast('Регистрация успешна!');
+      setTimeout(()=>{window.location.href='ads.html';},1000);
+    }
+    else{showToast('Ошибка регистрации');}
+  }catch(e){showToast('Ошибка подключения');}
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+</script>
+</body>
+</html>
