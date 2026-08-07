@@ -50,6 +50,24 @@
 .landlord-avatar-liked { background:var(--accent)!important; }
 .discount-price { color:#EF4444; font-weight:700; }
 .old-price { text-decoration:line-through; color:var(--text-secondary); font-size:12px; margin-left:6px; }
+.app-insights { max-width:480px; margin:0 auto; padding:0 16px 10px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.insight-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:10px; text-align:center; box-shadow:var(--shadow-sm); }
+.insight-label { color:var(--text-secondary); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+.insight-value { margin-top:4px; color:var(--text); font-size:16px; font-weight:800; }
+.quick-actions { max-width:480px; margin:0 auto; padding:0 16px 10px; display:flex; gap:8px; }
+.quick-actions .tag-btn { display:inline-flex; align-items:center; gap:6px; font-weight:600; }
+.quick-actions .tag-btn .count-badge { min-width:20px; height:20px; border-radius:10px; background:var(--primary-light); color:var(--primary); display:inline-flex; align-items:center; justify-content:center; font-size:10px; padding:0 6px; }
+.quick-actions .tag-btn.active .count-badge { background:rgba(255,255,255,.25); color:#fff; }
+.card-actions { position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:3; }
+.card-action-btn { width:30px; height:30px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.92); color:var(--text-secondary); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+.card-action-btn.active { color:var(--accent); }
+.card-action-btn.compare-active { color:var(--primary); }
+.compare-list { display:grid; gap:10px; margin-top:12px; }
+.compare-item { border:1px solid var(--border); border-radius:14px; padding:10px; }
+.compare-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.compare-title { font-size:13px; font-weight:700; }
+.compare-price { font-size:14px; font-weight:800; color:var(--primary); }
+.compare-meta { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; font-size:11px; color:var(--text-secondary); }
 </style>
 </head>
 <body>
@@ -69,6 +87,12 @@
     <input class="search-input" type="text" placeholder="Поиск объявлений, тегов..." id="searchInput">
     <button class="search-filter-btn" onclick="toggleFilters()"><i class="fas fa-sliders-h"></i></button>
   </div>
+</div>
+
+<div class="app-insights">
+  <div class="insight-card"><div class="insight-label">Объявлений</div><div class="insight-value" id="insightAds">0</div></div>
+  <div class="insight-card"><div class="insight-label">ТОП</div><div class="insight-value" id="insightFeatured">0</div></div>
+  <div class="insight-card"><div class="insight-label">Избранных</div><div class="insight-value" id="insightFavorites">0</div></div>
 </div>
 
 <div class="filter-panel" id="filterPanel">
@@ -106,6 +130,11 @@
 </div>
 
 <div class="results-info" id="resultsInfo"></div>
+
+<div class="quick-actions">
+  <button class="tag-btn" id="favoritesToggle"><i class="fas fa-heart"></i> Избранное</button>
+  <button class="tag-btn" id="compareOpenBtn"><i class="fas fa-balance-scale"></i> Сравнение <span class="count-badge" id="compareCount">0</span></button>
+</div>
 
 <div class="page">
   <div id="adsList"></div>
@@ -238,6 +267,16 @@
   </div>
 </div>
 
+<!-- COMPARE MODAL -->
+<div class="modal-overlay" id="compareModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title"><i class="fas fa-balance-scale"></i> Сравнение объявлений</h3>
+    <div id="compareModalBody"></div>
+    <button class="btn btn-outline btn-block" style="margin-top:12px" onclick="closeModal('compareModal')">Закрыть</button>
+  </div>
+</div>
+
 <!-- CHAT -->
 <div class="chat-widget" id="chatWidget">
   <div class="chat-header"><span><i class="fas fa-headset"></i> Поддержка TajRent</span><button class="header-icon" style="background:none;font-size:14px;" onclick="toggleChat()"><i class="fas fa-times"></i></button></div>
@@ -260,6 +299,9 @@ let currentSort = 'popular';
 let allAds = [];
 let currentUser = null;
 let uploadedImages = [];
+let favoriteIds = [];
+let compareIds = [];
+let favoritesOnly = false;
 
 const CAT_DATA = {
   'Платья': {icon:'fa-tshirt', color:'#EC4899'},
@@ -272,7 +314,87 @@ const CAT_DATA = {
   'Другое': {icon:'fa-box', color:'#6B7280'}
 };
 
+function loadLocalCollections() {
+  favoriteIds = JSON.parse(localStorage.getItem('rentFavorites') || '[]').map(Number).filter(Boolean);
+  compareIds = JSON.parse(localStorage.getItem('rentCompare') || '[]').map(Number).filter(Boolean).slice(0, 3);
+}
+
+function saveLocalCollections() {
+  localStorage.setItem('rentFavorites', JSON.stringify(favoriteIds));
+  localStorage.setItem('rentCompare', JSON.stringify(compareIds));
+}
+
+function applyLocalViewFilters(ads) {
+  if(!favoritesOnly) return ads;
+  return ads.filter(ad => favoriteIds.includes(ad.id));
+}
+
+function updateQuickActionState() {
+  const favBtn = document.getElementById('favoritesToggle');
+  const compareCount = document.getElementById('compareCount');
+  const compareBtn = document.getElementById('compareOpenBtn');
+  if(favBtn) favBtn.classList.toggle('active', favoritesOnly);
+  if(compareCount) compareCount.textContent = compareIds.length;
+  if(compareBtn) compareBtn.classList.toggle('active', compareIds.length > 0);
+}
+
+function updateInsights() {
+  document.getElementById('insightAds').textContent = allAds.length;
+  document.getElementById('insightFeatured').textContent = allAds.filter(a => a.featured).length;
+  document.getElementById('insightFavorites').textContent = favoriteIds.length;
+}
+
+function toggleFavoritesOnly() {
+  favoritesOnly = !favoritesOnly;
+  updateQuickActionState();
+  loadAds();
+}
+
+function toggleFavorite(event, adId) {
+  event.stopPropagation();
+  if(favoriteIds.includes(adId)) favoriteIds = favoriteIds.filter(id => id !== adId);
+  else favoriteIds.push(adId);
+  saveLocalCollections();
+  updateQuickActionState();
+  updateInsights();
+  renderAds(applyLocalViewFilters(allAds));
+}
+
+function toggleCompare(event, adId) {
+  event.stopPropagation();
+  if(compareIds.includes(adId)) compareIds = compareIds.filter(id => id !== adId);
+  else {
+    if(compareIds.length >= 3) return showToast('Можно сравнить не более 3 объявлений');
+    compareIds.push(adId);
+  }
+  saveLocalCollections();
+  updateQuickActionState();
+  renderAds(applyLocalViewFilters(allAds));
+}
+
+function openCompareModal() {
+  if(!compareIds.length) return showToast('Выберите объявления для сравнения');
+  const adsToCompare = compareIds.map(id => allAds.find(ad => ad.id === id)).filter(Boolean);
+  const body = document.getElementById('compareModalBody');
+  if(!adsToCompare.length) {
+    body.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>Выбранные объявления не найдены в текущем списке</p></div>';
+  } else {
+    body.innerHTML = '<div class="compare-list">' + adsToCompare.map(ad => (
+      '<div class="compare-item">'
+      + '<div class="compare-head"><div class="compare-title">' + ad.title + '</div><div class="compare-price">' + formatPrice(ad.price) + ' ₽ / ' + ad.unit + '</div></div>'
+      + '<div class="compare-meta">'
+      + '<div><i class="fas fa-city"></i> ' + (ad.city || '—') + '</div>'
+      + '<div><i class="fas fa-heart"></i> ' + ad.likes + '</div>'
+      + '<div><i class="fas fa-eye"></i> ' + ad.views + '</div>'
+      + '</div>'
+      + '</div>'
+    )).join('') + '</div>';
+  }
+  document.getElementById('compareModal').classList.add('show');
+}
+
 async function init() {
+  loadLocalCollections();
   currentUser = JSON.parse(localStorage.getItem('rentUser') || 'null');
   if(currentUser && currentUser.role === 'admin') document.getElementById('adminLink').style.display = '';
   await renderCategories();
@@ -280,6 +402,10 @@ async function init() {
   await loadAds();
   setupSortTabs();
   setupSearch();
+  updateQuickActionState();
+  updateInsights();
+  document.getElementById('favoritesToggle').addEventListener('click', toggleFavoritesOnly);
+  document.getElementById('compareOpenBtn').addEventListener('click', openCompareModal);
 }
 
 async function renderCategories() {
@@ -319,7 +445,8 @@ async function renderPopularTags() {
 }
 
 function filterByTag(tag) {
-  renderAds(allAds.filter(a => (a.tags||[]).includes(tag)));
+  const filtered = applyLocalViewFilters(allAds.filter(a => (a.tags||[]).includes(tag)));
+  renderAds(filtered);
   document.getElementById('resultsInfo').innerHTML = '<span class="results-tag">Тег: <b>'+tag+'</b></span> <button class="btn btn-sm btn-outline" onclick="loadAds()">Сбросить</button>';
 }
 
@@ -332,7 +459,9 @@ async function loadAds() {
     const url = '/api/ads' + (params.toString() ? '?' + params.toString() : '');
     const res = await fetch(url);
     allAds = await res.json();
-    renderAds(allAds);
+    renderAds(applyLocalViewFilters(allAds));
+    updateInsights();
+    updateQuickActionState();
   } catch(e) {
     document.getElementById('adsList').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Ошибка загрузки</p></div>';
   }
@@ -348,11 +477,17 @@ function renderAds(ads) {
     const hasFeatured = ad.featured ? '<span class="badge-featured"><i class="fas fa-crown"></i> ТОП</span>' : '';
     const tagsHtml = (ad.tags||[]).slice(0,3).map(t => '<span class="ad-tag">#'+t+'</span>').join('');
     const d = CAT_DATA[ad.category] || {icon:'fa-box',color:'#6B7280'};
+    const isFavorite = favoriteIds.includes(ad.id);
+    const isCompared = compareIds.includes(ad.id);
     const priceHtml = ad.discount > 0
       ? '<span class="discount-price">'+formatPrice(Math.round(ad.price*(1-ad.discount/100)))+' ₽</span><span class="old-price">'+formatPrice(ad.price)+' ₽</span>'
       : formatPrice(ad.price)+' ₽';
     return '<div class="ad-card" onclick="openAd('+ad.id+')">'
       +'<div class="ad-card-image" style="background:linear-gradient(135deg,'+d.color+'88,'+d.color+'44)"><i class="fas '+d.icon+'" style="font-size:48px;opacity:0.3;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></i>'
+      +'<div class="card-actions">'
+      +'<button class="card-action-btn '+(isFavorite?'active':'')+'" onclick="toggleFavorite(event,'+ad.id+')" title="В избранное"><i class="'+(isFavorite?'fas':'far')+' fa-heart"></i></button>'
+      +'<button class="card-action-btn '+(isCompared?'compare-active':'')+'" onclick="toggleCompare(event,'+ad.id+')" title="Сравнить"><i class="fas fa-balance-scale"></i></button>'
+      +'</div>'
       +'<div class="ad-badges">'+hasNew+hasDiscount+hasFeatured+'</div>'
       +'<div class="price-tag">'+priceHtml+' / '+ad.unit+'</div></div>'
       +'<div class="ad-card-body">'
@@ -386,7 +521,7 @@ function setupSearch() {
     clearTimeout(timer);
     timer = setTimeout(()=>{
       const q = this.value.toLowerCase();
-      const filtered = allAds.filter(a=>a.title.toLowerCase().includes(q)||a.desc.toLowerCase().includes(q)||(a.tags||[]).some(t=>t.toLowerCase().includes(q)));
+      const filtered = applyLocalViewFilters(allAds.filter(a=>a.title.toLowerCase().includes(q)||a.desc.toLowerCase().includes(q)||(a.tags||[]).some(t=>t.toLowerCase().includes(q))));
       renderAds(filtered);
       if(this.value) document.getElementById('resultsInfo').innerHTML = '<span class="results-tag">Поиск: <b>'+this.value+'</b></span> <span class="results-count">Найдено: '+filtered.length+'</span>';
       else document.getElementById('resultsInfo').innerHTML = '';
@@ -408,6 +543,7 @@ function applyFilters() {
   if(city) filtered = filtered.filter(a => a.city === city);
   if(discount) filtered = filtered.filter(a => a.discount > 0);
   if(isNew) filtered = filtered.filter(a => a.isNew);
+  filtered = applyLocalViewFilters(filtered);
   renderAds(filtered);
   document.getElementById('resultsInfo').innerHTML = '<span class="results-tag">Фильтры применены</span> <span class="results-count">Найдено: '+filtered.length+'</span> <button class="btn btn-sm btn-outline" onclick="loadAds()">Сбросить</button>';
 }
